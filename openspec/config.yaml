@@ -18,3 +18,18 @@ schema: spec-driven
 #       - Always include a "Non-goals" section
 #     tasks:
 #       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - Research extensively online for existing solutions, libraries, and prior art before proposing an approach
+    - Follow industry standards and established best practices; cite references where applicable
+    - Think deeply to arrive at an elegant, minimal design — avoid unnecessary complexity
+  design:
+    - Research extensively online for architectural patterns, library comparisons, and proven approaches before making design decisions
+    - Follow industry-standard patterns and best practices; justify deviations explicitly
+    - Strive for elegant, cohesive design — every component should have a clear purpose and minimal surface area
+  specs:
+    - Reference industry standards and best practices for the domain (e.g., CRDT for collaboration, OAuth for auth)
+    - Specifications should reflect deep thinking — cover edge cases, failure modes, and invariants
+  tasks:
+    - Each task should follow best practices for implementation quality
+    - Flag tasks that require online research as a prerequisite step
