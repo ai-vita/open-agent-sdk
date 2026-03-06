@@ -33,3 +33,4 @@ rules:
   tasks:
     - Each task should follow best practices for implementation quality
     - Flag tasks that require online research as a prerequisite step
+    - Vitest test files go next to their source module (e.g., src/bash.ts → src/bash.test.ts), not in a separate test directory
