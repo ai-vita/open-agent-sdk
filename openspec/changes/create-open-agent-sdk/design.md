@@ -4,7 +4,7 @@ We are building an open-source, modular TypeScript SDK for creating AI-powered c
 
 1. **Claude Agent SDK** (`@anthropic-ai/claude-agent-sdk`): Anthropic's official SDK — powerful but opaque, vendor-locked to Claude, and monolithic in design. It handles the full agent loop internally with no way to swap components.
 
-2. **bashkit**: An internal prototype that validates the concept of a sandbox-abstracted tool system built on the Vercel AI SDK. It has good separation of concerns (sandbox interface, tool factories, caching) but packages everything as a single module, making it impossible to use parts independently.
+2. **[bashkit](https://github.com/jbreite/bashkit)**: A library that validates the concept of a sandbox-abstracted tool system built on the Vercel AI SDK. It has good separation of concerns (sandbox interface, tool factories, caching) but packages everything as a single module, making it impossible to use parts independently.
 
 **Current state**: The `open-agent-sdk` repo is a fresh pnpm workspace. We are building from scratch.
 
@@ -37,10 +37,10 @@ We are building an open-source, modular TypeScript SDK for creating AI-powered c
 
 ### 1. Package Architecture
 
-**Decision**: Eight packages in a pnpm workspace with clear dependency direction.
+**Decision**: Seven packages in a pnpm workspace with clear dependency direction.
 
 ```
-@open-agent-sdk/core               ← Interfaces, types, agent loop, caching
+@open-agent-sdk/core               ← Interfaces, types, agent loop, caching, shared utilities
 @open-agent-sdk/tools              ← Standard + workflow tool implementations (depends on core)
 @open-agent-sdk/skills             ← Agent Skills standard support (depends on core)
 @open-agent-sdk/sandbox-local      ← Local sandbox (depends on core)
@@ -49,25 +49,25 @@ We are building an open-source, modular TypeScript SDK for creating AI-powered c
 @open-agent-sdk/provider-anthropic ← Anthropic middleware (depends on core)
 ```
 
-**Rationale**: Each sandbox implementation is a separate package so users only install what they need. The core package contains only interfaces and the agent loop — no concrete implementations. This follows the dependency inversion principle.
+**Rationale**: Each sandbox implementation is a separate package so users only install what they need. The core package contains interfaces, the agent loop, and shared cross-cutting utilities (caching, token estimation). This follows the dependency inversion principle.
 
 **Alternatives considered**:
 - *Single package with subpath exports* (`@open-agent-sdk/sdk`): Simpler to publish but forces users to install all sandbox dependencies. Rejected.
 - *Monorepo with >10 packages* (one per tool): Too granular; tools are tightly related and share the sandbox interface. Rejected.
 
-### 8. Skills System
+### 2. Skills System
 
 **Decision**: A dedicated `@open-agent-sdk/skills` package handles the [Agent Skills](https://agentskills.io) standard — discovery, parsing, remote fetching, and XML formatting. Skills use progressive disclosure: only metadata at startup, full content loaded on-demand.
 
 **Rationale**: Skills are a cross-cutting feature used by both system prompt construction and the Skill tool. Putting them in their own package keeps the tools package focused on tool execution and allows skills to be used independently (e.g., for prompt building without the full tool system).
 
-### 9. Tool Result Caching
+### 3. Tool Result Caching
 
 **Decision**: The core package provides a caching wrapper (`cached()`) and pluggable store interface (`CacheStore`). Default stores: in-memory LRU. Redis support via a separate adapter. Read-only tools (Read, Glob, Grep) are cached by default when caching is enabled.
 
-**Rationale**: Caching is a cross-cutting concern that wraps any tool. Following bashkit's proven pattern of `cached(tool, name, options)` keeps the caching logic decoupled from tool implementations.
+**Rationale**: Caching is a cross-cutting concern that wraps any tool. Following bashkit's pattern of `cached(tool, name, options)` keeps the caching logic decoupled from tool implementations.
 
-### 2. Sandbox Interface Design
+### 4. Sandbox Interface Design
 
 **Decision**: A minimal interface with two concerns — command execution and filesystem operations.
 
@@ -89,7 +89,7 @@ interface Sandbox {
 - *Rich interface with file watching, process management, etc.*: Over-engineered for V1. Can be added via extension interfaces later. Rejected.
 - *Separate interfaces for exec and filesystem*: Possible but adds complexity for consumers who always need both. Rejected.
 
-### 3. Tool System Design
+### 5. Tool System Design
 
 **Decision**: Tools are factory functions that take a `Sandbox` and return Vercel AI SDK-compatible tool objects.
 
@@ -103,7 +103,7 @@ function createBashTool(sandbox: Sandbox, config?: BashToolConfig): Tool
 - *Class-based tools with inheritance*: Heavier, harder to compose. Rejected.
 - *Declarative tool definitions (JSON/YAML)*: Less flexible, can't express complex execution logic. Rejected.
 
-### 4. Agent Loop Design
+### 6. Agent Loop Design
 
 **Decision**: The core package provides a `runAgent()` function that wraps the Vercel AI SDK's `generateText`/`streamText` with agent-specific concerns (step management, budget tracking, context compaction, stop conditions).
 
@@ -117,19 +117,19 @@ async function* runAgent(options: AgentOptions): AsyncGenerator<AgentEvent>
 - *Callback-based API*: Less composable than async generators. Rejected.
 - *Direct pass-through to `streamText()`*: Doesn't add enough value; consumers still need step management. Rejected.
 
-### 5. LLM Provider Integration
+### 7. LLM Provider Integration
 
 **Decision**: Use the Vercel AI SDK's `LanguageModel` type directly — no custom provider abstraction. The `@open-agent-sdk/provider-anthropic` package exports only Anthropic-specific optimizations (prompt caching middleware), not a new abstraction layer.
 
-**Rationale**: The Vercel AI SDK already solves provider abstraction completely. Any AI SDK provider (Anthropic, OpenAI, Google, Mistral, etc.) works out of the box by passing its model to `runAgent()`. Adding our own provider interface would be redundant abstraction. This matches bashkit's approach exactly — it accepts any `LanguageModel` and only provides middleware utilities.
+**Rationale**: The Vercel AI SDK already solves provider abstraction completely. Any AI SDK provider (Anthropic, OpenAI, Google, Mistral, etc.) works out of the box by passing its model to `runAgent()`. Adding our own provider interface would be redundant abstraction. This matches bashkit's approach — it accepts any `LanguageModel` and only provides middleware utilities.
 
-### 6. Build Tooling
+### 8. Build Tooling
 
 **Decision**: Use `tsup` for package builds, `vitest` for testing, `biome` for linting/formatting.
 
 **Rationale**: `tsup` produces clean ESM+CJS bundles with minimal config. This matches bashkit's tooling choices and the broader TypeScript ecosystem conventions.
 
-### 7. Sub-agent System
+### 9. Sub-agent System
 
 **Decision**: Sub-agents are created by spawning a new `runAgent()` call with restricted tools and a separate message history. A `Task` tool orchestrates sub-agent lifecycle.
 
@@ -139,7 +139,7 @@ async function* runAgent(options: AgentOptions): AsyncGenerator<AgentEvent>
 
 - **[Vercel AI SDK coupling]** → We depend on `ai` for the agent loop and tool types. If the AI SDK makes breaking changes, we need to update. *Mitigation*: Pin to AI SDK v6+ stable APIs; wrap AI SDK types behind our own interfaces where practical.
 
-- **[Too many packages early on]** → Eight packages is a lot for a V1. *Mitigation*: Start with core + tools + skills + sandbox-local as the minimum viable set. E2B, Vercel, and provider-anthropic can be added incrementally.
+- **[Too many packages early on]** → Seven packages is a lot for a V1. *Mitigation*: Start with core + tools + skills + sandbox-local as the minimum viable set. E2B, Vercel, and provider-anthropic can be added incrementally.
 
 - **[API surface discovery]** → With types split across packages, IDE auto-import may be harder. *Mitigation*: Re-export key types from the core package; provide a `@open-agent-sdk/tools` convenience package.
 

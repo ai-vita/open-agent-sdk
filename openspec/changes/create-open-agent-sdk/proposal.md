@@ -1,6 +1,6 @@
 ## Why
 
-The Anthropic Claude Agent SDK provides a powerful but opaque, vendor-locked agent runtime. Developers building AI-powered coding agents need an open-source, modular alternative that gives them full control over the agent loop, tool system, sandbox execution, and LLM provider — without being locked to a single vendor or monolithic architecture. An existing prototype ([bashkit](https://github.com/jbreite/bashkit)) validates the concept and feature set but couples all concerns into a single package, making it hard to swap components or extend cleanly. Our goal is to achieve feature parity with bashkit while delivering a cleaner, more elegant multi-package architecture.
+The Anthropic Claude Agent SDK provides a powerful but opaque, vendor-locked agent runtime. Developers building AI-powered coding agents need an open-source, modular alternative that gives them full control over the agent loop, tool system, sandbox execution, and LLM provider — without being locked to a single vendor or monolithic architecture. An existing library ([bashkit](https://github.com/jbreite/bashkit)) validates the concept and feature set but couples all concerns into a single package, making it hard to swap components or extend cleanly. Our goal is to achieve feature parity with bashkit while delivering a cleaner, more elegant multi-package architecture.
 
 ## What Changes
 
@@ -32,7 +32,7 @@ The Anthropic Claude Agent SDK provides a powerful but opaque, vendor-locked age
 
 ## Impact
 
-- **New packages**: 8-10 new npm packages under the `@open-agent-sdk` scope
+- **New packages**: 7 new npm packages under the `@open-agent-sdk` scope (core, tools, skills, sandbox-local, sandbox-e2b, sandbox-vercel, provider-anthropic)
 - **Dependencies**: `ai` (Vercel AI SDK), `zod` for schema validation, provider-specific SDKs in their respective packages
 - **Build system**: pnpm workspace with `tsup` or `unbuild` for package builds
 - **Ecosystem**: Provides an open-source, vendor-neutral alternative to `@anthropic-ai/claude-agent-sdk`

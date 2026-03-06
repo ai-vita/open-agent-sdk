@@ -1,6 +1,6 @@
 ## 1. Workspace & Build Setup
 
-- [ ] 1.1 Configure pnpm workspace with package directories for all packages (`packages/*`)
+- [x] 1.1 Configure pnpm workspace with package directories for all packages (`packages/*`) *(done in init-pnpm-workspace change)*
 - [ ] 1.2 Create shared tsconfig base with strict mode, ESM output, and path aliases
 - [ ] 1.3 Set up `tsup` build configuration for all packages (ESM + CJS dual output, .d.ts generation)
 - [ ] 1.4 Set up `vitest` as the test runner with workspace-level config
@@ -40,8 +40,10 @@
 - [ ] 4.8 Implement `createAskUserTool(config?)` — interactive user clarification with question/options
 - [ ] 4.9 Implement `createEnterPlanModeTool(state)` and `createExitPlanModeTool(state)` — planning workflow
 - [ ] 4.10 Implement `createTodoWriteTool(state, config?)` — task progress tracking
-- [ ] 4.11 Implement `createAgentTools(sandbox, config?)` convenience factory that creates all tools with cache support
-- [ ] 4.12 Write unit tests for each tool (mock sandbox, verify inputs/outputs, error handling)
+- [ ] 4.11 Implement `createWebSearchTool(config?)` — web search via `parallel-web` (optional peer dependency)
+- [ ] 4.12 Implement `createWebFetchTool(config?)` — URL fetching and AI processing via `parallel-web` (optional peer dependency)
+- [ ] 4.13 Implement `createAgentTools(sandbox, config?)` convenience factory that creates all tools with cache support
+- [ ] 4.14 Write unit tests for each tool (mock sandbox, verify inputs/outputs, error handling)
 
 ## 5. Skills Package (`@open-agent-sdk/skills`)
 

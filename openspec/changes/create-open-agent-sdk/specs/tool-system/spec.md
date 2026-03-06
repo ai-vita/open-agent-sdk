@@ -38,11 +38,19 @@ The tools package SHALL export a `createAgentTools(sandbox, config?)` function t
 
 #### Scenario: Create all tools with defaults
 - **WHEN** `createAgentTools(sandbox)` is called
-- **THEN** it SHALL return a `ToolSet` containing Bash, Read, Write, Edit, Glob, and Grep tools
+- **THEN** it SHALL return a `ToolSet` containing the 6 core sandbox tools: Bash, Read, Write, Edit, Glob, and Grep
 
 #### Scenario: Create tools with per-tool configuration
-- **WHEN** `createAgentTools(sandbox, { Bash: { timeout: 5000 } })` is called
+- **WHEN** `createAgentTools(sandbox, { tools: { Bash: { timeout: 5000 } } })` is called
 - **THEN** the Bash tool SHALL use the custom timeout, while other tools use defaults
+
+#### Scenario: Enable optional tools via config
+- **WHEN** `createAgentTools(sandbox, { askUser: { onQuestion }, planMode: true, webSearch: { apiKey } })` is called
+- **THEN** the returned `ToolSet` SHALL include core sandbox tools plus AskUser, EnterPlanMode, ExitPlanMode, and WebSearch tools
+
+#### Scenario: Optional tools are excluded by default
+- **WHEN** `createAgentTools(sandbox)` is called without optional tool config
+- **THEN** the returned `ToolSet` SHALL NOT include AskUser, PlanMode, Skill, WebSearch, WebFetch, or TodoWrite tools
 
 ### Requirement: Tools are composable
 Tools SHALL support wrapping patterns (e.g., adding caching, logging, or permission checks around any tool) without modifying the tool's internal logic.
