@@ -2,7 +2,7 @@
 
 We are building an open-source, modular TypeScript SDK for creating AI-powered coding agents. The SDK draws inspiration from two reference implementations:
 
-1. **Claude Agent SDK** (`@anthropic-ai/claude-agent-sdk`): Anthropic's official SDK — powerful but opaque, vendor-locked to Claude, and monolithic in design. It handles the full agent loop internally with no way to swap components.
+1. **Claude Agent SDK** (`@anthropic-ai/claude-agent-sdk`): Anthropic's official SDK — powerful but opaque, vendor-locked to Claude, and monolithic in design. It handles the full agent loop internally with no way to swap components. Full API reference: https://platform.claude.com/docs/en/agent-sdk/typescript.md
 
 2. **[bashkit](https://github.com/jbreite/bashkit)**: A library that validates the concept of a sandbox-abstracted tool system built on the Vercel AI SDK. It has good separation of concerns (sandbox interface, tool factories, caching) but packages everything as a single module, making it impossible to use parts independently.
 

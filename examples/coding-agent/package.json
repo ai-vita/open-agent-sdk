@@ -1,0 +1,25 @@
+{
+  "name": "@open-agent-sdk/example-coding-agent",
+  "version": "0.1.0",
+  "description": "Example: coding agent using core, sandbox-local, tools, skills, and provider-anthropic",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@open-agent-sdk/core": "workspace:*",
+    "@open-agent-sdk/sandbox-local": "workspace:*",
+    "@open-agent-sdk/tools": "workspace:*",
+    "@open-agent-sdk/skills": "workspace:*",
+    "@open-agent-sdk/provider-anthropic": "workspace:*",
+    "@ai-sdk/anthropic": "^1.0.0",
+    "ai": "^4.3.0",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}

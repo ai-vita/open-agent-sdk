@@ -1,0 +1,41 @@
+{
+  "name": "@open-agent-sdk/sandbox-e2b",
+  "version": "0.1.0",
+  "description": "E2B cloud sandbox implementation for open-agent-sdk",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@open-agent-sdk/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@e2b/code-interpreter": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@e2b/code-interpreter": {
+      "optional": false
+    }
+  },
+  "devDependencies": {
+    "@e2b/code-interpreter": "^1.0.0",
+    "typescript": "^5.0.0",
+    "tsup": "^8.0.0",
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "@open-agent-sdk/provider-anthropic",
+  "version": "0.1.0",
+  "description": "Anthropic-specific middleware for open-agent-sdk (prompt caching)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@open-agent-sdk/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "ai": ">=6.0.0",
+    "@ai-sdk/anthropic": ">=1.0.0"
+  },
+  "devDependencies": {
+    "ai": "^6.0.0",
+    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/provider": "^1.0.0",
+    "typescript": "^5.0.0",
+    "tsup": "^8.0.0",
+    "vitest": "^3.0.0"
+  }
+}
