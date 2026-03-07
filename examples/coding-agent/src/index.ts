@@ -5,32 +5,26 @@
  *   - @open-agent-sdk/sandbox-local  — local shell + filesystem sandbox
  *   - @open-agent-sdk/tools          — standard coding tools (Bash, Read, Write, Edit, Glob, Grep)
  *   - @open-agent-sdk/skills         — on-demand skill activation
- *   - @open-agent-sdk/provider-anthropic — Anthropic prompt-caching middleware
  *   - @open-agent-sdk/core           — runAgent() agent loop + stop conditions
  *
  * Run:
- *   ANTHROPIC_API_KEY=... pnpm start
+ *   1. Copy .env.local and set AI_GATEWAY_API_KEY to your Vercel AI Gateway token
+ *   2. pnpm start
  */
 
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { wrapLanguageModel } from "ai";
+import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local', override: true });
+
+import { gateway } from "ai";
 import { runAgent, stepCountIs } from "@open-agent-sdk/core";
 import { LocalSandbox } from "@open-agent-sdk/sandbox-local";
 import { createAgentTools } from "@open-agent-sdk/tools";
 import { discoverSkills, skillsToXml } from "@open-agent-sdk/skills";
-import { anthropicPromptCacheMiddleware } from "@open-agent-sdk/provider-anthropic";
 
 async function main() {
   // ── 1. Model ────────────────────────────────────────────────────────────────
-  const anthropic = createAnthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-  });
-
-  // Wrap with Anthropic prompt-caching middleware to reduce costs on repeated runs
-  const model = wrapLanguageModel({
-    model: anthropic("claude-sonnet-4-5"),
-    middleware: anthropicPromptCacheMiddleware,
-  });
+  const model = gateway('anthropic/claude-sonnet-4.6');
 
   // ── 2. Sandbox ──────────────────────────────────────────────────────────────
   // Local sandbox: commands run on the host machine in a temp directory
