@@ -12,8 +12,8 @@ open-agent-sdk/
 │   ├── sandbox-e2b/        # E2B cloud sandbox
 │   ├── sandbox-vercel/     # Vercel Firecracker sandbox
 │   ├── tools/              # Standard coding tools (Bash, Read, Write, Edit, Glob, Grep, …)
-│   ├── skills/             # Agent Skills standard (discovery, parsing, XML injection)
-│   └── provider-anthropic/ # Anthropic prompt-caching middleware
+│   ├── tools-web/          # Web tools (WebSearch, WebFetch) via parallel-web
+│   └── skills/             # Agent Skills standard (discovery, parsing, XML injection)
 └── examples/
     └── coding-agent/       # Complete coding agent example
 ```
@@ -29,9 +29,11 @@ pnpm test
 ### Run the example agent
 
 ```bash
-ANTHROPIC_API_KEY=sk-ant-... pnpm --filter @open-agent-sdk/example-coding-agent start
+# Copy .env and set AI_GATEWAY_API_KEY to your Vercel AI Gateway token
+cp examples/coding-agent/.env examples/coding-agent/.env.local
+AI_GATEWAY_API_KEY=... pnpm --filter @open-agent-sdk/example-coding-agent start
 # or pass a custom task:
-ANTHROPIC_API_KEY=sk-ant-... pnpm --filter @open-agent-sdk/example-coding-agent start "Count lines of code in src/"
+AI_GATEWAY_API_KEY=... pnpm --filter @open-agent-sdk/example-coding-agent start "Count lines of code in src/"
 ```
 
 ## Packages
@@ -60,9 +62,9 @@ for await (const event of runAgent({ model, tools, messages: "Hello!" })) {
 Local sandbox that runs commands via `child_process` and accesses the real filesystem.
 
 ```typescript
-import { createLocalSandbox } from "@open-agent-sdk/sandbox-local";
+import { LocalSandbox } from "@open-agent-sdk/sandbox-local";
 
-const sandbox = createLocalSandbox({ cwd: "/my/project" });
+const sandbox = new LocalSandbox({ cwd: "/my/project" });
 const result = await sandbox.exec("ls -la");
 ```
 
@@ -71,9 +73,9 @@ const result = await sandbox.exec("ls -la");
 Cloud sandbox backed by [E2B](https://e2b.dev). Requires `@e2b/code-interpreter` as a peer dependency.
 
 ```typescript
-import { createE2BSandbox } from "@open-agent-sdk/sandbox-e2b";
+import { E2BSandbox } from "@open-agent-sdk/sandbox-e2b";
 
-const sandbox = await createE2BSandbox({ apiKey: process.env.E2B_API_KEY });
+const sandbox = new E2BSandbox({ apiKey: process.env.E2B_API_KEY });
 ```
 
 ### `@open-agent-sdk/sandbox-vercel`
@@ -81,9 +83,9 @@ const sandbox = await createE2BSandbox({ apiKey: process.env.E2B_API_KEY });
 Cloud sandbox backed by [Vercel Firecracker](https://vercel.com/docs/sandbox). Requires `@vercel/sandbox` as a peer dependency.
 
 ```typescript
-import { createVercelSandbox } from "@open-agent-sdk/sandbox-vercel";
+import { VercelSandbox } from "@open-agent-sdk/sandbox-vercel";
 
-const sandbox = await createVercelSandbox({ runtime: "node22" });
+const sandbox = new VercelSandbox({ runtime: "node22" });
 ```
 
 ### `@open-agent-sdk/tools`
@@ -102,8 +104,6 @@ Standard coding tools built on the Sandbox interface.
 | `createEnterPlanModeTool(state)` | Enter planning mode |
 | `createExitPlanModeTool(state)` | Exit planning mode with a plan |
 | `createTodoWriteTool(state)` | Track task progress |
-| `createWebSearchTool(config)` | Web search via `parallel-web` (optional) |
-| `createWebFetchTool(config)` | URL fetching and AI processing via `parallel-web` (optional) |
 | `createTaskTool(config)` | Spawn sub-agents for parallel/isolated work |
 
 The **`createAgentTools(sandbox, config?)`** convenience factory creates all tools in one call:
@@ -112,13 +112,19 @@ The **`createAgentTools(sandbox, config?)`** convenience factory creates all too
 import { createAgentTools } from "@open-agent-sdk/tools";
 
 const { tools, planModeState, todoState } = createAgentTools(sandbox, {
-  bash: { timeout: 30_000 },
-  read: { maxLines: 500 },
-  write: true,
-  edit: true,
-  glob: true,
-  grep: true,
+  tools: { Bash: { timeout: 30_000 } },
 });
+```
+
+### `@open-agent-sdk/tools-web`
+
+Web tools backed by `parallel-web`. Install this package when you need WebSearch or WebFetch.
+
+```typescript
+import { createWebSearchTool, createWebFetchTool } from "@open-agent-sdk/tools-web";
+
+const webSearch = createWebSearchTool();
+const webFetch = createWebFetchTool();
 ```
 
 ### `@open-agent-sdk/skills`
@@ -138,40 +144,19 @@ const systemPrompt = `You are a coding agent.\n\n${skillsToXml(skills)}`;
 await setupAgentEnvironment(sandbox, { skills });
 ```
 
-### `@open-agent-sdk/provider-anthropic`
-
-Anthropic-specific middleware for the AI SDK.
-
-**Prompt caching** — automatically adds `cache_control` markers to reduce costs on repeated agent runs:
-
-```typescript
-import { wrapLanguageModel } from "ai";
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { anthropicPromptCacheMiddleware } from "@open-agent-sdk/provider-anthropic";
-
-const model = wrapLanguageModel({
-  model: createAnthropic()("claude-sonnet-4-5"),
-  middleware: anthropicPromptCacheMiddleware,
-});
-```
-
 ## Complete Example
 
 ```typescript
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { wrapLanguageModel } from "ai";
+import { gateway } from "ai";
 import { runAgent, stepCountIs } from "@open-agent-sdk/core";
-import { createLocalSandbox } from "@open-agent-sdk/sandbox-local";
+import { LocalSandbox } from "@open-agent-sdk/sandbox-local";
 import { createAgentTools } from "@open-agent-sdk/tools";
 import { discoverSkills, skillsToXml } from "@open-agent-sdk/skills";
-import { anthropicPromptCacheMiddleware } from "@open-agent-sdk/provider-anthropic";
 
-const model = wrapLanguageModel({
-  model: createAnthropic()("claude-sonnet-4-5"),
-  middleware: anthropicPromptCacheMiddleware,
-});
+// Uses Vercel AI Gateway — set AI_GATEWAY_API_KEY in .env.local
+const model = gateway("anthropic/claude-sonnet-4.6");
 
-const sandbox = createLocalSandbox({ cwd: process.cwd() });
+const sandbox = new LocalSandbox({ cwd: process.cwd() });
 const { tools } = createAgentTools(sandbox);
 
 const skills = await discoverSkills();
