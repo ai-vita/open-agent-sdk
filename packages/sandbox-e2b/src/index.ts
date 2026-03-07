@@ -1,3 +1,4 @@
+import { Sandbox as E2BSandbox } from "@e2b/code-interpreter";
 import type { Sandbox, ExecOptions, ExecResult, DirEntry } from "@open-agent-sdk/core";
 
 export interface E2BSandboxConfig {
@@ -23,34 +24,24 @@ export async function createE2BSandbox(config: E2BSandboxConfig = {}): Promise<S
   let sandboxId: string | undefined = config.sandboxId;
 
   // Lazy singleton — prevents race conditions with concurrent tool calls
-  let e2bInstance: E2BSandboxInstance | null = null;
-  let initPromise: Promise<E2BSandboxInstance> | null = null;
+  let e2bInstance: InstanceType<typeof E2BSandbox> | null = null;
+  let initPromise: Promise<InstanceType<typeof E2BSandbox>> | null = null;
 
-  async function getE2B(): Promise<E2BSandboxInstance> {
+  async function getE2B(): Promise<InstanceType<typeof E2BSandbox>> {
     if (e2bInstance) return e2bInstance;
     if (initPromise) return initPromise;
 
     initPromise = (async () => {
-      let E2BSandboxSDK: E2BSandboxSDKType;
-      try {
-        const module = await import("@e2b/code-interpreter");
-        E2BSandboxSDK = module.Sandbox as E2BSandboxSDKType;
-      } catch {
-        throw new Error(
-          "@open-agent-sdk/sandbox-e2b requires @e2b/code-interpreter. Install with: npm install @e2b/code-interpreter",
-        );
-      }
-
-      let sbx: E2BSandboxInstance;
+      let sbx: InstanceType<typeof E2BSandbox>;
       if (config.sandboxId) {
-        sbx = await E2BSandboxSDK.connect(config.sandboxId) as E2BSandboxInstance;
+        sbx = await E2BSandbox.connect(config.sandboxId);
       } else {
-        sbx = await E2BSandboxSDK.create({
+        sbx = await E2BSandbox.create({
           apiKey: config.apiKey,
           timeoutMs: timeout,
           metadata: config.metadata,
-        }) as E2BSandboxInstance;
-        sandboxId = (sbx as { sandboxId?: string }).sandboxId;
+        });
+        sandboxId = sbx.sandboxId;
       }
 
       e2bInstance = sbx;
@@ -158,24 +149,3 @@ export async function createE2BSandbox(config: E2BSandboxConfig = {}): Promise<S
   };
 }
 
-// Minimal E2B interface types for internal use
-interface E2BSandboxSDKType {
-  connect(id: string): Promise<E2BSandboxInstance>;
-  create(opts: { apiKey?: string; timeoutMs?: number; metadata?: Record<string, string> }): Promise<E2BSandboxInstance>;
-}
-
-interface E2BSandboxInstance {
-  commands: {
-    run(cmd: string, opts?: { cwd?: string; timeoutMs?: number }): Promise<{
-      stdout?: string;
-      stderr?: string;
-      exitCode?: number;
-    }>;
-  };
-  files: {
-    read(path: string): Promise<string>;
-    write(path: string, content: string): Promise<void>;
-    list(path: string): Promise<Array<{ name: string; type?: string; isDir?: boolean }>>;
-  };
-  kill(): Promise<void>;
-}

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { LRUCacheStore, cached } from "./cache.js";
+import { middleTruncate } from "./utils.js";
+import { composeStops } from "./agent.js";
 import { tool } from "ai";
 import { z } from "zod";
 
@@ -128,13 +130,11 @@ describe("cached()", () => {
 });
 
 describe("middleTruncate", () => {
-  it("leaves short text unchanged", async () => {
-    const { middleTruncate } = await import("./utils.js");
+  it("leaves short text unchanged", () => {
     expect(middleTruncate("short", 100)).toBe("short");
   });
 
-  it("truncates long text with marker", async () => {
-    const { middleTruncate } = await import("./utils.js");
+  it("truncates long text with marker", () => {
     const result = middleTruncate("a".repeat(100), 20);
     expect(result).toContain("truncated");
     expect(result.length).toBeGreaterThan(20);
@@ -142,16 +142,14 @@ describe("middleTruncate", () => {
 });
 
 describe("stopConditions", () => {
-  it("composeStops stops when any condition is true", async () => {
-    const { composeStops } = await import("./agent.js");
+  it("composeStops stops when any condition is true", () => {
     const neverStop = () => false;
     const alwaysStop = () => true;
     const composed = composeStops(neverStop, alwaysStop);
     expect(composed({} as never)).toBe(true);
   });
 
-  it("composeStops continues when all false", async () => {
-    const { composeStops } = await import("./agent.js");
+  it("composeStops continues when all false", () => {
     const neverStop = () => false;
     const composed = composeStops(neverStop, neverStop);
     expect(composed({} as never)).toBe(false);

@@ -22,18 +22,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@e2b/code-interpreter": "^1.0.0",
     "@open-agent-sdk/core": "workspace:*"
   },
-  "peerDependencies": {
-    "@e2b/code-interpreter": ">=1.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@e2b/code-interpreter": {
-      "optional": false
-    }
-  },
   "devDependencies": {
-    "@e2b/code-interpreter": "^1.0.0",
     "typescript": "^5.0.0",
     "tsup": "^8.0.0",
     "vitest": "^3.0.0"

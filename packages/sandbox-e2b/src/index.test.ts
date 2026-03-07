@@ -2,26 +2,28 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createE2BSandbox } from "./index.js";
 
 // Mock the @e2b/code-interpreter module
-const mockE2BInstance = {
-  sandboxId: "mock-sandbox-123",
-  commands: {
-    run: vi.fn(async () => ({ stdout: "output", stderr: "", exitCode: 0 })),
-  },
-  files: {
-    read: vi.fn(async () => "file content"),
-    write: vi.fn(async () => undefined),
-    list: vi.fn(async () => [
-      { name: "a.txt", type: "file" },
-      { name: "subdir", type: "dir" },
-    ]),
-  },
-  kill: vi.fn(async () => undefined),
-};
-
-const mockE2BClass = {
-  create: vi.fn(async () => mockE2BInstance),
-  connect: vi.fn(async () => mockE2BInstance),
-};
+const { mockE2BInstance, mockE2BClass } = vi.hoisted(() => {
+  const mockE2BInstance = {
+    sandboxId: "mock-sandbox-123",
+    commands: {
+      run: vi.fn(async () => ({ stdout: "output", stderr: "", exitCode: 0 })),
+    },
+    files: {
+      read: vi.fn(async () => "file content"),
+      write: vi.fn(async () => undefined),
+      list: vi.fn(async () => [
+        { name: "a.txt", type: "file" },
+        { name: "subdir", type: "dir" },
+      ]),
+    },
+    kill: vi.fn(async () => undefined),
+  };
+  const mockE2BClass = {
+    create: vi.fn(async () => mockE2BInstance),
+    connect: vi.fn(async () => mockE2BInstance),
+  };
+  return { mockE2BInstance, mockE2BClass };
+});
 
 vi.mock("@e2b/code-interpreter", () => ({
   Sandbox: mockE2BClass,

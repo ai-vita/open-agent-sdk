@@ -22,18 +22,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@open-agent-sdk/core": "workspace:*"
-  },
-  "peerDependencies": {
-    "@vercel/sandbox": ">=1.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@vercel/sandbox": {
-      "optional": false
-    }
+    "@open-agent-sdk/core": "workspace:*",
+    "@vercel/sandbox": "^1.0.0"
   },
   "devDependencies": {
-    "@vercel/sandbox": "^1.0.0",
     "typescript": "^5.0.0",
     "tsup": "^8.0.0",
     "vitest": "^3.0.0"

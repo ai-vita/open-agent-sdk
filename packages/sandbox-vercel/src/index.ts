@@ -1,3 +1,4 @@
+import { Sandbox as VercelSandbox } from "@vercel/sandbox";
 import type { Sandbox, ExecOptions, ExecResult, DirEntry } from "@open-agent-sdk/core";
 
 export interface VercelSandboxConfig {
@@ -32,38 +33,28 @@ export async function createVercelSandbox(
   let sandboxId: string | undefined = config.sandboxId;
   let rgPath: string | undefined;
 
-  let sbxInstance: VercelSandboxInstance | null = null;
-  let initPromise: Promise<VercelSandboxInstance> | null = null;
+  let sbxInstance: VercelSandbox | null = null;
+  let initPromise: Promise<VercelSandbox> | null = null;
 
-  async function getSbx(): Promise<VercelSandboxInstance> {
+  async function getSbx(): Promise<VercelSandbox> {
     if (sbxInstance) return sbxInstance;
     if (initPromise) return initPromise;
 
     initPromise = (async () => {
-      let VercelSandboxSDK: VercelSandboxSDKType;
-      try {
-        const module = await import("@vercel/sandbox");
-        VercelSandboxSDK = module.Sandbox as unknown as VercelSandboxSDKType;
-      } catch {
-        throw new Error(
-          "@open-agent-sdk/sandbox-vercel requires @vercel/sandbox. Install with: npm install @vercel/sandbox",
-        );
-      }
-
-      let sbx: VercelSandboxInstance;
+      let sbx: VercelSandbox;
       if (config.sandboxId) {
-        sbx = await VercelSandboxSDK.get({ sandboxId: config.sandboxId }) as VercelSandboxInstance;
+        sbx = await VercelSandbox.get({ sandboxId: config.sandboxId });
       } else {
-        const createOpts: Record<string, unknown> = {
+        const createOpts: Parameters<typeof VercelSandbox.create>[0] = {
           runtime: config.runtime ?? "node22",
           resources: config.resources ?? { vcpus: 2 },
           timeout,
         };
         if (config.teamId && config.token) {
-          createOpts.teamId = config.teamId;
-          createOpts.token = config.token;
+          (createOpts as Record<string, unknown>).teamId = config.teamId;
+          (createOpts as Record<string, unknown>).token = config.token;
         }
-        sbx = await VercelSandboxSDK.create(createOpts as never) as VercelSandboxInstance;
+        sbx = await VercelSandbox.create(createOpts);
       }
 
       sandboxId = sbx.sandboxId;
@@ -137,38 +128,38 @@ export async function createVercelSandbox(
     async readFile(path: string): Promise<string> {
       const sbx = await getSbx();
       const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      const result = await sbx.readFile({ path: fullPath });
-      if (result.content === undefined) throw new Error(`File not found: ${fullPath}`);
-      return result.content;
+      const buf = await sbx.readFileToBuffer({ path: fullPath });
+      if (buf === null) throw new Error(`File not found: ${fullPath}`);
+      return buf.toString();
     },
 
     async writeFile(path: string, content: string): Promise<void> {
       const sbx = await getSbx();
       const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      await sbx.writeFile({ path: fullPath, content });
+      await sbx.writeFiles([{ path: fullPath, content: Buffer.from(content) }]);
     },
 
     async readDir(path: string): Promise<DirEntry[]> {
       const sbx = await getSbx();
       const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      const result = await sbx.exec("bash", ["-c", `ls -la "${fullPath}" 2>/dev/null | tail -n +2`]);
+      const result = await sbx.runCommand({ cmd: "bash", args: ["-c", `ls -la "${fullPath}" 2>/dev/null | tail -n +2`], cwd: workingDirectory });
       const stdout = await result.stdout();
       return stdout
         .split("\n")
         .filter(Boolean)
-        .map((line) => {
+        .map((line: string) => {
           const parts = line.split(/\s+/);
           const name = parts[parts.length - 1];
           const isDirectory = line.startsWith("d");
           return { name, isDirectory };
         })
-        .filter((e) => e.name && e.name !== "." && e.name !== "..");
+        .filter((e: { name: string; isDirectory: boolean }) => e.name && e.name !== "." && e.name !== "..");
     },
 
     async fileExists(path: string): Promise<boolean> {
       const sbx = await getSbx();
       const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      const result = await sbx.exec("bash", ["-c", `test -e "${fullPath}" && echo "yes" || echo "no"`]);
+      const result = await sbx.runCommand({ cmd: "bash", args: ["-c", `test -e "${fullPath}" && echo "yes" || echo "no"`], cwd: workingDirectory });
       const out = await result.stdout();
       return out.trim() === "yes";
     },
@@ -176,14 +167,14 @@ export async function createVercelSandbox(
     async isDirectory(path: string): Promise<boolean> {
       const sbx = await getSbx();
       const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      const result = await sbx.exec("bash", ["-c", `test -d "${fullPath}" && echo "yes" || echo "no"`]);
+      const result = await sbx.runCommand({ cmd: "bash", args: ["-c", `test -d "${fullPath}" && echo "yes" || echo "no"`], cwd: workingDirectory });
       const out = await result.stdout();
       return out.trim() === "yes";
     },
 
     async destroy(): Promise<void> {
       if (sbxInstance) {
-        await sbxInstance.destroy();
+        await sbxInstance.stop();
         sbxInstance = null;
       }
     },
@@ -208,7 +199,7 @@ export async function createVercelSandbox(
  * Provisions ripgrep in the sandbox and returns the binary path.
  */
 async function ensureRipgrep(
-  sbx: VercelSandboxInstance,
+  sbx: VercelSandbox,
   cwd: string,
 ): Promise<string | undefined> {
   try {
@@ -230,23 +221,3 @@ async function ensureRipgrep(
   return undefined;
 }
 
-// Minimal interface types for internal use
-interface VercelSandboxSDKType {
-  create(opts: Record<string, unknown>): Promise<VercelSandboxInstance>;
-  get(opts: { sandboxId: string }): Promise<VercelSandboxInstance>;
-}
-
-interface CommandResult {
-  stdout(): Promise<string>;
-  stderr(): Promise<string>;
-  exitCode?: number;
-}
-
-interface VercelSandboxInstance {
-  sandboxId: string;
-  runCommand(opts: { cmd: string; args?: string[]; cwd?: string; signal?: AbortSignal }): Promise<CommandResult>;
-  exec(cmd: string, args?: string[]): Promise<CommandResult>;
-  readFile(opts: { path: string }): Promise<{ content?: string }>;
-  writeFile(opts: { path: string; content: string }): Promise<void>;
-  destroy(): Promise<void>;
-}

@@ -2,25 +2,28 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createVercelSandbox } from "./index.js";
 
 // Mock the @vercel/sandbox module
-const mockCommandResult = {
-  stdout: vi.fn(async () => "output"),
-  stderr: vi.fn(async () => ""),
-  exitCode: 0,
-};
+const { mockCommandResult, mockVercelInstance, mockVercelClass } = vi.hoisted(() => {
+  const mockCommandResult = {
+    stdout: vi.fn(async () => "output"),
+    stderr: vi.fn(async () => ""),
+    exitCode: 0,
+  };
 
-const mockVercelInstance = {
-  sandboxId: "mock-vercel-sandbox-123",
-  runCommand: vi.fn(async () => mockCommandResult),
-  exec: vi.fn(async () => mockCommandResult),
-  readFile: vi.fn(async () => ({ content: "file content" as string | undefined })),
-  writeFile: vi.fn(async () => undefined),
-  destroy: vi.fn(async () => undefined),
-};
+  const mockVercelInstance = {
+    sandboxId: "mock-vercel-sandbox-123",
+    runCommand: vi.fn(async () => mockCommandResult),
+    readFileToBuffer: vi.fn(async () => Buffer.from("file content")),
+    writeFiles: vi.fn(async () => undefined),
+    stop: vi.fn(async () => undefined),
+  };
 
-const mockVercelClass = {
-  create: vi.fn(async () => mockVercelInstance),
-  get: vi.fn(async () => mockVercelInstance),
-};
+  const mockVercelClass = {
+    create: vi.fn(async () => mockVercelInstance),
+    get: vi.fn(async () => mockVercelInstance),
+  };
+
+  return { mockCommandResult, mockVercelInstance, mockVercelClass };
+});
 
 vi.mock("@vercel/sandbox", () => ({
   Sandbox: mockVercelClass,
@@ -31,10 +34,9 @@ beforeEach(() => {
   mockCommandResult.stdout.mockResolvedValue("output");
   mockCommandResult.stderr.mockResolvedValue("");
   mockVercelInstance.runCommand.mockResolvedValue(mockCommandResult);
-  mockVercelInstance.exec.mockResolvedValue(mockCommandResult);
-  mockVercelInstance.readFile.mockResolvedValue({ content: "file content" });
-  mockVercelInstance.writeFile.mockResolvedValue(undefined);
-  mockVercelInstance.destroy.mockResolvedValue(undefined);
+  mockVercelInstance.readFileToBuffer.mockResolvedValue(Buffer.from("file content"));
+  mockVercelInstance.writeFiles.mockResolvedValue(undefined);
+  mockVercelInstance.stop.mockResolvedValue(undefined);
 });
 
 describe("createVercelSandbox", () => {
@@ -92,20 +94,20 @@ describe("createVercelSandbox", () => {
       const sandbox = await createVercelSandbox({ ensureTools: false });
       const content = await sandbox.readFile("/vercel/sandbox/test.txt");
       expect(content).toBe("file content");
-      expect(mockVercelInstance.readFile).toHaveBeenCalledWith({ path: "/vercel/sandbox/test.txt" });
+      expect(mockVercelInstance.readFileToBuffer).toHaveBeenCalledWith({ path: "/vercel/sandbox/test.txt" });
     });
 
     it("reads a file by relative path, prepending cwd", async () => {
       const sandbox = await createVercelSandbox({ ensureTools: false });
       const content = await sandbox.readFile("relative.txt");
       expect(content).toBe("file content");
-      expect(mockVercelInstance.readFile).toHaveBeenCalledWith({
+      expect(mockVercelInstance.readFileToBuffer).toHaveBeenCalledWith({
         path: "/vercel/sandbox/relative.txt",
       });
     });
 
-    it("throws when file content is undefined", async () => {
-      mockVercelInstance.readFile.mockResolvedValue({ content: undefined });
+    it("throws when file is not found", async () => {
+      mockVercelInstance.readFileToBuffer.mockResolvedValue(null as never);
       const sandbox = await createVercelSandbox({ ensureTools: false });
       await expect(sandbox.readFile("/vercel/sandbox/missing.txt")).rejects.toThrow(
         "File not found",
@@ -115,25 +117,25 @@ describe("createVercelSandbox", () => {
     it("writes a file", async () => {
       const sandbox = await createVercelSandbox({ ensureTools: false });
       await sandbox.writeFile("/vercel/sandbox/out.txt", "hello");
-      expect(mockVercelInstance.writeFile).toHaveBeenCalledWith({
+      expect(mockVercelInstance.writeFiles).toHaveBeenCalledWith([{
         path: "/vercel/sandbox/out.txt",
-        content: "hello",
-      });
+        content: Buffer.from("hello"),
+      }]);
     });
 
     it("writes a file by relative path", async () => {
       const sandbox = await createVercelSandbox({ ensureTools: false });
       await sandbox.writeFile("out.txt", "world");
-      expect(mockVercelInstance.writeFile).toHaveBeenCalledWith({
+      expect(mockVercelInstance.writeFiles).toHaveBeenCalledWith([{
         path: "/vercel/sandbox/out.txt",
-        content: "world",
-      });
+        content: Buffer.from("world"),
+      }]);
     });
 
     it("readDir parses ls output into DirEntry list", async () => {
       const lsOutput =
         "drwxr-xr-x 2 root root 4096 Jan 1 subdir\n-rw-r--r-- 1 root root 100 Jan 1 file.txt";
-      mockVercelInstance.exec.mockResolvedValueOnce({
+      mockVercelInstance.runCommand.mockResolvedValueOnce({
         ...mockCommandResult,
         stdout: vi.fn(async () => lsOutput),
       });
@@ -145,7 +147,7 @@ describe("createVercelSandbox", () => {
     });
 
     it("fileExists returns true when file exists", async () => {
-      mockVercelInstance.exec.mockResolvedValueOnce({
+      mockVercelInstance.runCommand.mockResolvedValueOnce({
         ...mockCommandResult,
         stdout: vi.fn(async () => "yes"),
       });
@@ -154,7 +156,7 @@ describe("createVercelSandbox", () => {
     });
 
     it("fileExists returns false when file does not exist", async () => {
-      mockVercelInstance.exec.mockResolvedValueOnce({
+      mockVercelInstance.runCommand.mockResolvedValueOnce({
         ...mockCommandResult,
         stdout: vi.fn(async () => "no"),
       });
@@ -163,7 +165,7 @@ describe("createVercelSandbox", () => {
     });
 
     it("isDirectory returns true for a directory", async () => {
-      mockVercelInstance.exec.mockResolvedValueOnce({
+      mockVercelInstance.runCommand.mockResolvedValueOnce({
         ...mockCommandResult,
         stdout: vi.fn(async () => "yes"),
       });
@@ -172,7 +174,7 @@ describe("createVercelSandbox", () => {
     });
 
     it("isDirectory returns false for a file", async () => {
-      mockVercelInstance.exec.mockResolvedValueOnce({
+      mockVercelInstance.runCommand.mockResolvedValueOnce({
         ...mockCommandResult,
         stdout: vi.fn(async () => "no"),
       });
@@ -193,17 +195,17 @@ describe("createVercelSandbox", () => {
       expect(sandbox.id).toBe("mock-vercel-sandbox-123");
     });
 
-    it("calls destroy on the instance on destroy()", async () => {
+    it("calls stop on the instance on destroy()", async () => {
       const sandbox = await createVercelSandbox({ ensureTools: false });
       await sandbox.exec("pwd"); // Initialize
       await sandbox.destroy();
-      expect(mockVercelInstance.destroy).toHaveBeenCalled();
+      expect(mockVercelInstance.stop).toHaveBeenCalled();
     });
 
     it("destroy is a no-op when sandbox was never initialized", async () => {
       const sandbox = await createVercelSandbox({ ensureTools: false });
       await expect(sandbox.destroy()).resolves.toBeUndefined();
-      expect(mockVercelInstance.destroy).not.toHaveBeenCalled();
+      expect(mockVercelInstance.stop).not.toHaveBeenCalled();
     });
   });
 
