@@ -1,5 +1,6 @@
 import { tool, zodSchema } from "ai";
 import { z } from "zod";
+import Parallel from "parallel-web";
 
 export interface WebSearchResult {
   title: string;
@@ -30,19 +31,6 @@ const webSearchSchema = z.object({
 
 type WebSearchInput = z.infer<typeof webSearchSchema>;
 
-let parallelModule: typeof import("parallel-web") | null = null;
-
-async function getParallelModule() {
-  if (!parallelModule) {
-    try {
-      parallelModule = await import("parallel-web");
-    } catch {
-      throw new Error("WebSearch requires parallel-web. Install with: npm install parallel-web");
-    }
-  }
-  return parallelModule;
-}
-
 const WEB_SEARCH_DESCRIPTION = `Search the web for current information.
 
 After answering, include a "Sources:" section with relevant URLs.
@@ -56,7 +44,6 @@ export function createWebSearchTool(config: WebSearchConfig) {
     inputSchema: zodSchema(webSearchSchema),
     execute: async ({ query, allowed_domains, blocked_domains }: WebSearchInput): Promise<WebSearchOutput | WebSearchError> => {
       try {
-        const { default: Parallel } = await getParallelModule();
         const client = new Parallel({ apiKey });
 
         const sourcePolicy =

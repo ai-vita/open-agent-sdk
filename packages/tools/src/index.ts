@@ -34,12 +34,6 @@ export type { PlanModeState, EnterPlanModeOutput, EnterPlanModeError, ExitPlanMo
 export { createTodoWriteTool } from "./todo-write.js";
 export type { TodoItem, TodoState, TodoWriteOutput, TodoWriteError } from "./todo-write.js";
 
-// Web tools (require parallel-web peer dependency)
-export { createWebSearchTool } from "./web-search.js";
-export type { WebSearchOutput, WebSearchError, WebSearchResult, WebSearchConfig } from "./web-search.js";
-export { createWebFetchTool } from "./web-fetch.js";
-export type { WebFetchOutput, WebFetchError, WebFetchConfig } from "./web-fetch.js";
-
 // Task / sub-agent tool
 export { createTaskTool } from "./task.js";
 export type {

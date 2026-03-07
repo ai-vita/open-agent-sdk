@@ -10,11 +10,8 @@ import { createGrepTool } from "./grep.js";
 import { createAskUserTool, type AskUserResponseHandler } from "./ask-user.js";
 import { createEnterPlanModeTool, createExitPlanModeTool, type PlanModeState } from "./plan-mode.js";
 import { createTodoWriteTool, type TodoState, type TodoItem } from "./todo-write.js";
-import { createWebSearchTool, type WebSearchConfig } from "./web-search.js";
-import { createWebFetchTool, type WebFetchConfig } from "./web-fetch.js";
-
 /** Which tools are cached by default when cache is enabled */
-const DEFAULT_CACHEABLE = ["Read", "Glob", "Grep", "WebFetch", "WebSearch"] as const;
+const DEFAULT_CACHEABLE = ["Read", "Glob", "Grep"] as const;
 
 /**
  * Cache configuration for createAgentTools.
@@ -51,10 +48,6 @@ export interface AgentToolsConfig {
   planMode?: boolean;
   /** Include TodoWrite tool */
   todoWrite?: { onUpdate?: (todos: TodoItem[]) => void };
-  /** Include WebSearch tool */
-  webSearch?: WebSearchConfig;
-  /** Include WebFetch tool */
-  webFetch?: WebFetchConfig;
   /** Enable tool result caching */
   cache?: CacheConfig;
   /** Default timeout for sandbox tools */
@@ -117,14 +110,6 @@ export function createAgentTools(
   if (config?.todoWrite) {
     todoState = { todos: [] };
     tools.TodoWrite = createTodoWriteTool(todoState, config.todoWrite.onUpdate);
-  }
-
-  if (config?.webSearch) {
-    tools.WebSearch = createWebSearchTool(config.webSearch);
-  }
-
-  if (config?.webFetch) {
-    tools.WebFetch = createWebFetchTool(config.webFetch);
   }
 
   // Apply caching

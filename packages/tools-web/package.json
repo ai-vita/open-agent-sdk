@@ -1,7 +1,7 @@
 {
-  "name": "@open-agent-sdk/tools",
+  "name": "@open-agent-sdk/tools-web",
   "version": "0.1.0",
-  "description": "Standard tools for open-agent-sdk (Bash, Read, Write, Edit, Glob, Grep, AskUser, etc.)",
+  "description": "Web tools for open-agent-sdk (WebFetch, WebSearch) powered by parallel-web",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -23,15 +23,17 @@
   },
   "dependencies": {
     "@open-agent-sdk/core": "workspace:*",
-    "zod": "^3.0.0"
+    "parallel-web": "*"
   },
   "peerDependencies": {
-    "ai": ">=6.0.0"
+    "ai": ">=6.0.0",
+    "zod": "^3.0.0"
   },
   "devDependencies": {
     "ai": "^6.0.0",
     "typescript": "^5.0.0",
     "tsup": "^8.0.0",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "zod": "^3.0.0"
   }
 }

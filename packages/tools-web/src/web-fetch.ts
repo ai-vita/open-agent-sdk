@@ -1,6 +1,7 @@
 import { generateText, tool, zodSchema } from "ai";
 import { z } from "zod";
 import type { LanguageModel } from "ai";
+import Parallel from "parallel-web";
 
 export interface WebFetchOutput {
   response: string;
@@ -25,19 +26,6 @@ const webFetchSchema = z.object({
 
 type WebFetchInput = z.infer<typeof webFetchSchema>;
 
-let parallelModule: typeof import("parallel-web") | null = null;
-
-async function getParallelModule() {
-  if (!parallelModule) {
-    try {
-      parallelModule = await import("parallel-web");
-    } catch {
-      throw new Error("WebFetch requires parallel-web. Install with: npm install parallel-web");
-    }
-  }
-  return parallelModule;
-}
-
 const WEB_FETCH_DESCRIPTION = `Fetch content from a URL and process it with an AI model.
 
 - Fetches the URL content and extracts text
@@ -52,7 +40,6 @@ export function createWebFetchTool(config: WebFetchConfig) {
     inputSchema: zodSchema(webFetchSchema),
     execute: async ({ url, prompt }: WebFetchInput): Promise<WebFetchOutput | WebFetchError> => {
       try {
-        const { default: Parallel } = await getParallelModule();
         const client = new Parallel({ apiKey });
 
         const extract = await client.beta.extract({
