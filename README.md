@@ -1,6 +1,21 @@
-# open-agent-sdk
+# Open Agent SDK
 
-A modular TypeScript SDK for building AI coding agents, built on the [Vercel AI SDK](https://sdk.vercel.ai/) (v6+).
+**Open-source TypeScript SDK for building AI agents** — a provider-agnostic, modular alternative to the [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/typescript.md).
+
+Built on the [Vercel AI SDK](https://sdk.vercel.ai/) (v6+), so it works with **any LLM**: Anthropic Claude, OpenAI GPT, Google Gemini, Mistral, and more.
+
+> **Why Open Agent SDK?** The official Claude Agent SDK is powerful but vendor-locked and opaque. Open Agent SDK gives you the same agent loop capabilities — tool use, multi-step reasoning, sub-agents, context compaction — with full control, any LLM provider, and an install-only-what-you-need package architecture.
+
+## Features
+
+- **Provider-agnostic** — swap between Claude, GPT-4, Gemini, or any Vercel AI SDK provider
+- **Modular packages** — use only what you need; no mandatory cloud dependencies
+- **Sandbox-agnostic** — run locally, on E2B, on Vercel Firecracker, or bring your own
+- **Full TypeScript** — strict types, Zod schemas, generic type parameters throughout
+- **Agent loop built-in** — step management, budget tracking, context compaction, stop conditions
+- **Sub-agent support** — spawn isolated agents for parallel or delegated work
+- **Skills system** — composable behavior modules via the [Agent Skills](https://github.com/anthropics/agent-skills) standard
+- **Tool caching** — LRU cache wrapper for any tool, out of the box
 
 ## Architecture
 
@@ -11,7 +26,7 @@ open-agent-sdk/
 │   ├── sandbox-local/      # Local filesystem + shell sandbox
 │   ├── sandbox-e2b/        # E2B cloud sandbox
 │   ├── sandbox-vercel/     # Vercel Firecracker sandbox
-│   ├── tools/              # Standard coding tools (Bash, Read, Write, Edit, Glob, Grep, …)
+│   ├── tools/              # Standard agent tools (Bash, Read, Write, Edit, Glob, Grep, …)
 │   ├── tools-web/          # Web tools (WebSearch, WebFetch) via parallel-web
 │   └── skills/             # Agent Skills standard (discovery, parsing, XML injection)
 └── examples/
@@ -34,6 +49,37 @@ cp examples/coding-agent/.env examples/coding-agent/.env.local
 AI_GATEWAY_API_KEY=... pnpm --filter @open-agent-sdk/example-coding-agent start
 # or pass a custom task:
 AI_GATEWAY_API_KEY=... pnpm --filter @open-agent-sdk/example-coding-agent start "Count lines of code in src/"
+```
+
+## Complete Example
+
+```typescript
+import { gateway } from "ai";
+import { runAgent, stepCountIs } from "@open-agent-sdk/core";
+import { LocalSandbox } from "@open-agent-sdk/sandbox-local";
+import { createAgentTools } from "@open-agent-sdk/tools";
+import { discoverSkills, skillsToXml } from "@open-agent-sdk/skills";
+
+// Works with any Vercel AI SDK provider — swap gateway() for openai(), google(), etc.
+const model = gateway("anthropic/claude-sonnet-4.6");
+
+const sandbox = new LocalSandbox({ cwd: process.cwd() });
+const { tools } = createAgentTools(sandbox);
+
+const skills = await discoverSkills();
+const system = `You are an AI agent.\n\n${skillsToXml(skills)}`;
+
+for await (const event of runAgent({
+  model,
+  tools,
+  system,
+  messages: "Summarize this codebase.",
+  stopWhen: stepCountIs(10),
+  stream: true,
+})) {
+  if (event.type === "text-delta") process.stdout.write(event.delta);
+  if (event.type === "done") console.log(`\nDone in ${event.steps} steps.`);
+}
 ```
 
 ## Packages
@@ -90,10 +136,10 @@ const sandbox = new VercelSandbox({ runtime: "node22" });
 
 ### `@open-agent-sdk/tools`
 
-Standard coding tools built on the Sandbox interface.
+Standard agent tools built on the Sandbox interface.
 
-| Factory | Description |
-|---------|-------------|
+| Tool | Description |
+|------|-------------|
 | `createBashTool(sandbox)` | Run shell commands with timeout and output truncation |
 | `createReadTool(sandbox)` | Read files with line numbers, offset/limit pagination |
 | `createWriteTool(sandbox)` | Write files with parent directory creation |
@@ -138,42 +184,22 @@ import { discoverSkills, skillsToXml, setupAgentEnvironment } from "@open-agent-
 const skills = await discoverSkills();
 
 // Inject into system prompt as XML
-const systemPrompt = `You are a coding agent.\n\n${skillsToXml(skills)}`;
+const systemPrompt = `You are an AI agent.\n\n${skillsToXml(skills)}`;
 
 // Or set up a sandbox workspace with skill files
 await setupAgentEnvironment(sandbox, { skills });
 ```
 
-## Complete Example
+## Open Agent SDK vs Claude Agent SDK
 
-```typescript
-import { gateway } from "ai";
-import { runAgent, stepCountIs } from "@open-agent-sdk/core";
-import { LocalSandbox } from "@open-agent-sdk/sandbox-local";
-import { createAgentTools } from "@open-agent-sdk/tools";
-import { discoverSkills, skillsToXml } from "@open-agent-sdk/skills";
-
-// Uses Vercel AI Gateway — set AI_GATEWAY_API_KEY in .env.local
-const model = gateway("anthropic/claude-sonnet-4.6");
-
-const sandbox = new LocalSandbox({ cwd: process.cwd() });
-const { tools } = createAgentTools(sandbox);
-
-const skills = await discoverSkills();
-const system = `You are a coding agent.\n\n${skillsToXml(skills)}`;
-
-for await (const event of runAgent({
-  model,
-  tools,
-  system,
-  messages: "Summarize this codebase.",
-  stopWhen: stepCountIs(10),
-  stream: true,
-})) {
-  if (event.type === "text-delta") process.stdout.write(event.delta);
-  if (event.type === "done") console.log(`\nDone in ${event.steps} steps.`);
-}
-```
+| | Open Agent SDK | Claude Agent SDK |
+|---|---|---|
+| **LLM providers** | Any (OpenAI, Anthropic, Google, Mistral, …) | Anthropic only |
+| **Open source** | Yes (MIT) | No |
+| **Package architecture** | Modular — install only what you need | Monolithic |
+| **Sandbox** | Local, E2B, Vercel, or custom | Managed (opaque) |
+| **Agent loop** | Transparent, extensible | Internal, black-box |
+| **Built on** | Vercel AI SDK (standard) | Proprietary runtime |
 
 ## Development
 
