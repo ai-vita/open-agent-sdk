@@ -12,7 +12,7 @@ const mockVercelInstance = {
   sandboxId: "mock-vercel-sandbox-123",
   runCommand: vi.fn(async () => mockCommandResult),
   exec: vi.fn(async () => mockCommandResult),
-  readFile: vi.fn(async () => ({ content: "file content" })),
+  readFile: vi.fn(async () => ({ content: "file content" as string | undefined })),
   writeFile: vi.fn(async () => undefined),
   destroy: vi.fn(async () => undefined),
 };

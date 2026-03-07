@@ -120,7 +120,7 @@ describe("createTaskTool", () => {
 
   it("handles errors gracefully", async () => {
     const model = {
-      ...createMockModel(),
+      ...(createMockModel() as Record<string, unknown>),
       doGenerate: vi.fn(async () => { throw new Error("Model error"); }),
     } as unknown as LanguageModel;
 

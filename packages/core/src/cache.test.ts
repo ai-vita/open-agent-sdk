@@ -147,13 +147,13 @@ describe("stopConditions", () => {
     const neverStop = () => false;
     const alwaysStop = () => true;
     const composed = composeStops(neverStop, alwaysStop);
-    expect(composed({} as never, 1)).toBe(true);
+    expect(composed({} as never)).toBe(true);
   });
 
   it("composeStops continues when all false", async () => {
     const { composeStops } = await import("./agent.js");
     const neverStop = () => false;
     const composed = composeStops(neverStop, neverStop);
-    expect(composed({} as never, 1)).toBe(false);
+    expect(composed({} as never)).toBe(false);
   });
 });

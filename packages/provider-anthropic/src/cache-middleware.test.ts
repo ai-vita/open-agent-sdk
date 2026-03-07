@@ -14,6 +14,7 @@ async function transformMessages(messages: Array<{ role: string; content: Messag
   const result = await anthropicPromptCacheMiddleware.transformParams!({
     params: { prompt: messages } as never,
     type: "generate",
+    model: {} as never,
   });
   return (result as { prompt: typeof messages }).prompt;
 }

@@ -39,12 +39,7 @@ async function main() {
 
   // ── 3. Tools ────────────────────────────────────────────────────────────────
   const { tools } = createAgentTools(sandbox, {
-    bash: { timeout: 30_000 },
-    read: { maxLines: 500 },
-    write: true,
-    edit: true,
-    glob: true,
-    grep: true,
+    tools: { Bash: { timeout: 30_000 } },
   });
 
   // ── 4. Skills ───────────────────────────────────────────────────────────────
@@ -82,7 +77,7 @@ async function main() {
         console.log(`\n[tool] ${event.toolName}(${JSON.stringify(event.input).slice(0, 80)}...)`);
         break;
       case "tool-result":
-        console.log(`[result] exit=${(event.result as { exitCode?: number }).exitCode ?? "ok"}`);
+        console.log(`[result] exit=${(event.output as { exitCode?: number }).exitCode ?? "ok"}`);
         break;
       case "error":
         console.error(`\n[error] ${event.error}`);
