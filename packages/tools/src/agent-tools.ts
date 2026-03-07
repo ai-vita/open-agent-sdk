@@ -9,7 +9,7 @@ import { createGlobTool } from "./glob.js";
 import { createGrepTool } from "./grep.js";
 import { createAskUserTool, type AskUserResponseHandler } from "./ask-user.js";
 import { createEnterPlanModeTool, createExitPlanModeTool, type PlanModeState } from "./plan-mode.js";
-import { createTodoWriteTool, type TodoState } from "./todo-write.js";
+import { createTodoWriteTool, type TodoState, type TodoItem } from "./todo-write.js";
 import { createWebSearchTool, type WebSearchConfig } from "./web-search.js";
 import { createWebFetchTool, type WebFetchConfig } from "./web-fetch.js";
 
@@ -50,7 +50,7 @@ export interface AgentToolsConfig {
   /** Include EnterPlanMode / ExitPlanMode tools */
   planMode?: boolean;
   /** Include TodoWrite tool */
-  todoWrite?: { onUpdate?: (todos: unknown[]) => void };
+  todoWrite?: { onUpdate?: (todos: TodoItem[]) => void };
   /** Include WebSearch tool */
   webSearch?: WebSearchConfig;
   /** Include WebFetch tool */
@@ -116,7 +116,7 @@ export function createAgentTools(
 
   if (config?.todoWrite) {
     todoState = { todos: [] };
-    tools.TodoWrite = createTodoWriteTool(todoState, config.todoWrite.onUpdate as ((todos: import("./todo-write.js").TodoItem[]) => void) | undefined);
+    tools.TodoWrite = createTodoWriteTool(todoState, config.todoWrite.onUpdate);
   }
 
   if (config?.webSearch) {
