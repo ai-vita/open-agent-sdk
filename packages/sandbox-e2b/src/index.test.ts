@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createE2BSandbox } from "./index.js";
+import { E2BSandbox } from "./index.js";
 
 // Mock the @e2b/code-interpreter module
 const { mockE2BInstance, mockE2BClass } = vi.hoisted(() => {
@@ -38,7 +38,7 @@ beforeEach(() => {
 describe("createE2BSandbox", () => {
   describe("exec", () => {
     it("executes a command and returns result", async () => {
-      const sandbox = await createE2BSandbox();
+      const sandbox = new E2BSandbox();
       const result = await sandbox.exec("echo hello");
       expect(result.stdout).toBe("output");
       expect(result.exitCode).toBe(0);
@@ -47,14 +47,14 @@ describe("createE2BSandbox", () => {
 
     it("handles timeout errors", async () => {
       mockE2BInstance.commands.run.mockRejectedValue(new Error("command timed out"));
-      const sandbox = await createE2BSandbox();
+      const sandbox = new E2BSandbox();
       const result = await sandbox.exec("sleep 10", { timeout: 100 });
       expect(result.interrupted).toBe(true);
       expect(result.exitCode).toBe(124);
     });
 
     it("reconnects to existing sandbox by ID", async () => {
-      const sandbox = await createE2BSandbox({ sandboxId: "existing-123" });
+      const sandbox = new E2BSandbox({ sandboxId: "existing-123" });
       await sandbox.exec("pwd");
       expect(mockE2BClass.connect).toHaveBeenCalledWith("existing-123");
       expect(mockE2BClass.create).not.toHaveBeenCalled();
@@ -63,13 +63,13 @@ describe("createE2BSandbox", () => {
 
   describe("filesystem operations", () => {
     it("reads a file", async () => {
-      const sandbox = await createE2BSandbox();
+      const sandbox = new E2BSandbox();
       const content = await sandbox.readFile("/home/user/file.txt");
       expect(content).toBe("file content");
     });
 
     it("writes a file", async () => {
-      const sandbox = await createE2BSandbox();
+      const sandbox = new E2BSandbox();
       await sandbox.writeFile("/home/user/out.txt", "hello");
       expect(mockE2BInstance.files.write).toHaveBeenCalledWith(
         "/home/user/out.txt",
@@ -78,7 +78,7 @@ describe("createE2BSandbox", () => {
     });
 
     it("lists directory entries", async () => {
-      const sandbox = await createE2BSandbox();
+      const sandbox = new E2BSandbox();
       const entries = await sandbox.readDir("/home/user");
       expect(entries).toHaveLength(2);
       expect(entries[0].name).toBe("a.txt");
@@ -90,19 +90,19 @@ describe("createE2BSandbox", () => {
 
   describe("lifecycle", () => {
     it("uses lazy initialization (doesn't create sandbox until first operation)", async () => {
-      await createE2BSandbox();
+      new E2BSandbox();
       // No operation performed, so E2B should not have been called yet
       expect(mockE2BClass.create).not.toHaveBeenCalled();
     });
 
     it("exposes sandbox id after first operation", async () => {
-      const sandbox = await createE2BSandbox();
+      const sandbox = new E2BSandbox();
       await sandbox.exec("pwd");
       expect(sandbox.id).toBe("mock-sandbox-123");
     });
 
     it("calls kill on destroy", async () => {
-      const sandbox = await createE2BSandbox();
+      const sandbox = new E2BSandbox();
       await sandbox.exec("pwd"); // Initialize
       await sandbox.destroy();
       expect(mockE2BInstance.kill).toHaveBeenCalled();

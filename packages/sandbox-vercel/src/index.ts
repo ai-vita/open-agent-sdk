@@ -1,4 +1,4 @@
-import { Sandbox as VercelSandbox } from "@vercel/sandbox";
+import { Sandbox as VercelSandboxImpl } from "@vercel/sandbox";
 import type { Sandbox, ExecOptions, ExecResult, DirEntry } from "@open-agent-sdk/core";
 
 export interface VercelSandboxConfig {
@@ -21,203 +21,199 @@ export interface VercelSandboxConfig {
 }
 
 /**
- * Creates a Vercel Firecracker sandbox implementing the Sandbox interface.
+ * Vercel Firecracker sandbox implementing the Sandbox interface.
  * Uses lazy singleton initialization — the sandbox is provisioned on first use.
  * Supports reconnection via sandboxId.
  */
-export async function createVercelSandbox(
-  config: VercelSandboxConfig = {},
-): Promise<Sandbox> {
-  const workingDirectory = config.cwd ?? "/vercel/sandbox";
-  const timeout = config.timeout ?? 300000;
-  let sandboxId: string | undefined = config.sandboxId;
-  let rgPath: string | undefined;
+export class VercelSandbox implements Sandbox {
+  private workingDirectory: string;
+  private timeout: number;
+  private sandboxId: string | undefined;
+  private sbxInstance: VercelSandboxImpl | null = null;
+  private initPromise: Promise<VercelSandboxImpl> | null = null;
+  private _rgPath: string | undefined;
 
-  let sbxInstance: VercelSandbox | null = null;
-  let initPromise: Promise<VercelSandbox> | null = null;
+  constructor(private config: VercelSandboxConfig = {}) {
+    this.workingDirectory = config.cwd ?? "/vercel/sandbox";
+    this.timeout = config.timeout ?? 300000;
+    this.sandboxId = config.sandboxId;
+  }
 
-  async function getSbx(): Promise<VercelSandbox> {
-    if (sbxInstance) return sbxInstance;
-    if (initPromise) return initPromise;
+  private async getSbx(): Promise<VercelSandboxImpl> {
+    if (this.sbxInstance) return this.sbxInstance;
+    if (this.initPromise) return this.initPromise;
 
-    initPromise = (async () => {
-      let sbx: VercelSandbox;
-      if (config.sandboxId) {
-        sbx = await VercelSandbox.get({ sandboxId: config.sandboxId });
+    this.initPromise = (async () => {
+      let sbx: VercelSandboxImpl;
+      if (this.config.sandboxId) {
+        sbx = await VercelSandboxImpl.get({ sandboxId: this.config.sandboxId });
       } else {
-        const createOpts: Parameters<typeof VercelSandbox.create>[0] = {
-          runtime: config.runtime ?? "node22",
-          resources: config.resources ?? { vcpus: 2 },
-          timeout,
+        const createOpts: Parameters<typeof VercelSandboxImpl.create>[0] = {
+          runtime: this.config.runtime ?? "node22",
+          resources: this.config.resources ?? { vcpus: 2 },
+          timeout: this.timeout,
         };
-        if (config.teamId && config.token) {
-          (createOpts as Record<string, unknown>).teamId = config.teamId;
-          (createOpts as Record<string, unknown>).token = config.token;
+        if (this.config.teamId && this.config.token) {
+          (createOpts as Record<string, unknown>).teamId = this.config.teamId;
+          (createOpts as Record<string, unknown>).token = this.config.token;
         }
-        sbx = await VercelSandbox.create(createOpts);
+        sbx = await VercelSandboxImpl.create(createOpts);
       }
 
-      sandboxId = sbx.sandboxId;
-      sbxInstance = sbx;
+      this.sandboxId = sbx.sandboxId;
+      this.sbxInstance = sbx;
 
       // Auto-provision ripgrep for grep operations
-      if (config.ensureTools !== false) {
-        rgPath = await ensureRipgrep(sbx, workingDirectory);
+      if (this.config.ensureTools !== false) {
+        this._rgPath = await this.ensureRipgrep(sbx);
       }
 
       return sbx;
     })();
 
-    return initPromise;
+    return this.initPromise;
   }
 
-  const sandbox: Sandbox = {
-    async exec(command: string, options?: ExecOptions): Promise<ExecResult> {
-      const sbx = await getSbx();
-      const startTime = performance.now();
-      let interrupted = false;
+  private async ensureRipgrep(sbx: VercelSandboxImpl): Promise<string | undefined> {
+    try {
+      // Check if rg is already available
+      const check = await sbx.runCommand({ cmd: "which", args: ["rg"], cwd: this.workingDirectory });
+      const rgBin = (await check.stdout()).trim();
+      if (rgBin) return rgBin;
 
-      const abortController = new AbortController();
-      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      // Try to install via apt
+      const install = await sbx.runCommand({
+        cmd: "bash",
+        args: ["-c", "apt-get install -y ripgrep 2>/dev/null && which rg"],
+        cwd: this.workingDirectory,
+      });
+      const installed = (await install.stdout()).trim();
+      if (installed) return installed;
+    } catch {}
 
-      if (options?.timeout) {
-        timeoutId = setTimeout(() => {
-          interrupted = true;
-          abortController.abort();
-        }, options.timeout);
-      }
+    return undefined;
+  }
 
-      try {
-        const result = await sbx.runCommand({
-          cmd: "bash",
-          args: ["-c", command],
-          cwd: options?.cwd ?? workingDirectory,
-          signal: abortController.signal,
-        });
+  private resolvePath(path: string): string {
+    return path.startsWith("/") ? path : `${this.workingDirectory}/${path}`;
+  }
 
-        if (timeoutId) clearTimeout(timeoutId);
+  get rgPath() {
+    return this._rgPath;
+  }
 
-        const stdout = await result.stdout();
-        const stderr = await result.stderr();
+  set rgPath(path: string | undefined) {
+    this._rgPath = path;
+  }
 
-        return {
-          stdout,
-          stderr,
-          exitCode: result.exitCode ?? 0,
-          durationMs: Math.round(performance.now() - startTime),
-          interrupted,
-        };
-      } catch (error) {
-        if (timeoutId) clearTimeout(timeoutId);
-        const durationMs = Math.round(performance.now() - startTime);
+  async exec(command: string, options?: ExecOptions): Promise<ExecResult> {
+    const sbx = await this.getSbx();
+    const startTime = performance.now();
+    let interrupted = false;
 
-        if (interrupted) {
-          return { stdout: "", stderr: "Command timed out", exitCode: 124, durationMs, interrupted: true };
-        }
+    const abortController = new AbortController();
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-        return {
-          stdout: "",
-          stderr: error instanceof Error ? error.message : String(error),
-          exitCode: 1,
-          durationMs,
-          interrupted: false,
-        };
-      }
-    },
+    if (options?.timeout) {
+      timeoutId = setTimeout(() => {
+        interrupted = true;
+        abortController.abort();
+      }, options.timeout);
+    }
 
-    async readFile(path: string): Promise<string> {
-      const sbx = await getSbx();
-      const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      const buf = await sbx.readFileToBuffer({ path: fullPath });
-      if (buf === null) throw new Error(`File not found: ${fullPath}`);
-      return buf.toString();
-    },
+    try {
+      const result = await sbx.runCommand({
+        cmd: "bash",
+        args: ["-c", command],
+        cwd: options?.cwd ?? this.workingDirectory,
+        signal: abortController.signal,
+      });
 
-    async writeFile(path: string, content: string): Promise<void> {
-      const sbx = await getSbx();
-      const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      await sbx.writeFiles([{ path: fullPath, content: Buffer.from(content) }]);
-    },
+      if (timeoutId) clearTimeout(timeoutId);
 
-    async readDir(path: string): Promise<DirEntry[]> {
-      const sbx = await getSbx();
-      const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      const result = await sbx.runCommand({ cmd: "bash", args: ["-c", `ls -la "${fullPath}" 2>/dev/null | tail -n +2`], cwd: workingDirectory });
       const stdout = await result.stdout();
-      return stdout
-        .split("\n")
-        .filter(Boolean)
-        .map((line: string) => {
-          const parts = line.split(/\s+/);
-          const name = parts[parts.length - 1];
-          const isDirectory = line.startsWith("d");
-          return { name, isDirectory };
-        })
-        .filter((e: { name: string; isDirectory: boolean }) => e.name && e.name !== "." && e.name !== "..");
-    },
+      const stderr = await result.stderr();
 
-    async fileExists(path: string): Promise<boolean> {
-      const sbx = await getSbx();
-      const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      const result = await sbx.runCommand({ cmd: "bash", args: ["-c", `test -e "${fullPath}" && echo "yes" || echo "no"`], cwd: workingDirectory });
-      const out = await result.stdout();
-      return out.trim() === "yes";
-    },
+      return {
+        stdout,
+        stderr,
+        exitCode: result.exitCode ?? 0,
+        durationMs: Math.round(performance.now() - startTime),
+        interrupted,
+      };
+    } catch (error) {
+      if (timeoutId) clearTimeout(timeoutId);
+      const durationMs = Math.round(performance.now() - startTime);
 
-    async isDirectory(path: string): Promise<boolean> {
-      const sbx = await getSbx();
-      const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      const result = await sbx.runCommand({ cmd: "bash", args: ["-c", `test -d "${fullPath}" && echo "yes" || echo "no"`], cwd: workingDirectory });
-      const out = await result.stdout();
-      return out.trim() === "yes";
-    },
-
-    async destroy(): Promise<void> {
-      if (sbxInstance) {
-        await sbxInstance.stop();
-        sbxInstance = null;
+      if (interrupted) {
+        return { stdout: "", stderr: "Command timed out", exitCode: 124, durationMs, interrupted: true };
       }
-    },
 
-    get id() {
-      return sandboxId;
-    },
+      return {
+        stdout: "",
+        stderr: error instanceof Error ? error.message : String(error),
+        exitCode: 1,
+        durationMs,
+        interrupted: false,
+      };
+    }
+  }
 
-    get rgPath() {
-      return rgPath;
-    },
+  async readFile(path: string): Promise<string> {
+    const sbx = await this.getSbx();
+    const fullPath = this.resolvePath(path);
+    const buf = await sbx.readFileToBuffer({ path: fullPath });
+    if (buf === null) throw new Error(`File not found: ${fullPath}`);
+    return buf.toString();
+  }
 
-    set rgPath(path: string | undefined) {
-      rgPath = path;
-    },
-  };
+  async writeFile(path: string, content: string): Promise<void> {
+    const sbx = await this.getSbx();
+    const fullPath = this.resolvePath(path);
+    await sbx.writeFiles([{ path: fullPath, content: Buffer.from(content) }]);
+  }
 
-  return sandbox;
+  async readDir(path: string): Promise<DirEntry[]> {
+    const sbx = await this.getSbx();
+    const fullPath = this.resolvePath(path);
+    const result = await sbx.runCommand({ cmd: "bash", args: ["-c", `ls -la "${fullPath}" 2>/dev/null | tail -n +2`], cwd: this.workingDirectory });
+    const stdout = await result.stdout();
+    return stdout
+      .split("\n")
+      .filter(Boolean)
+      .map((line: string) => {
+        const parts = line.split(/\s+/);
+        const name = parts[parts.length - 1];
+        const isDirectory = line.startsWith("d");
+        return { name, isDirectory };
+      })
+      .filter((e: { name: string; isDirectory: boolean }) => e.name && e.name !== "." && e.name !== "..");
+  }
+
+  async fileExists(path: string): Promise<boolean> {
+    const sbx = await this.getSbx();
+    const fullPath = this.resolvePath(path);
+    const result = await sbx.runCommand({ cmd: "bash", args: ["-c", `test -e "${fullPath}" && echo "yes" || echo "no"`], cwd: this.workingDirectory });
+    const out = await result.stdout();
+    return out.trim() === "yes";
+  }
+
+  async isDirectory(path: string): Promise<boolean> {
+    const sbx = await this.getSbx();
+    const fullPath = this.resolvePath(path);
+    const result = await sbx.runCommand({ cmd: "bash", args: ["-c", `test -d "${fullPath}" && echo "yes" || echo "no"`], cwd: this.workingDirectory });
+    const out = await result.stdout();
+    return out.trim() === "yes";
+  }
+
+  async destroy(): Promise<void> {
+    if (this.sbxInstance) {
+      await this.sbxInstance.stop();
+      this.sbxInstance = null;
+    }
+  }
+
+  get id() {
+    return this.sandboxId;
+  }
 }
-
-/**
- * Provisions ripgrep in the sandbox and returns the binary path.
- */
-async function ensureRipgrep(
-  sbx: VercelSandbox,
-  cwd: string,
-): Promise<string | undefined> {
-  try {
-    // Check if rg is already available
-    const check = await sbx.runCommand({ cmd: "which", args: ["rg"], cwd });
-    const rgBin = (await check.stdout()).trim();
-    if (rgBin) return rgBin;
-
-    // Try to install via apt
-    const install = await sbx.runCommand({
-      cmd: "bash",
-      args: ["-c", "apt-get install -y ripgrep 2>/dev/null && which rg"],
-      cwd,
-    });
-    const installed = (await install.stdout()).trim();
-    if (installed) return installed;
-  } catch {}
-
-  return undefined;
-}
-

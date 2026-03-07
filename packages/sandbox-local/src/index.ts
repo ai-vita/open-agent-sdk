@@ -17,129 +17,131 @@ export interface LocalSandboxConfig {
 }
 
 /**
- * Creates a local sandbox that executes commands and accesses the filesystem
+ * Local sandbox that executes commands and accesses the filesystem
  * using Node.js built-in APIs. Supports Bun and Node.js runtimes.
  */
-export function createLocalSandbox(config: LocalSandboxConfig = {}): Sandbox {
-  const workingDirectory = config.cwd ?? "/tmp";
+export class LocalSandbox implements Sandbox {
+  private workingDirectory: string;
 
-  // Ensure working directory exists
-  if (!existsSync(workingDirectory)) {
-    mkdirSync(workingDirectory, { recursive: true });
+  constructor(config: LocalSandboxConfig = {}) {
+    this.workingDirectory = config.cwd ?? "/tmp";
+
+    // Ensure working directory exists
+    if (!existsSync(this.workingDirectory)) {
+      mkdirSync(this.workingDirectory, { recursive: true });
+    }
   }
 
-  function resolvePath(p: string): string {
-    return p.startsWith("/") ? p : `${workingDirectory}/${p}`;
+  private resolvePath(p: string): string {
+    return p.startsWith("/") ? p : `${this.workingDirectory}/${p}`;
   }
 
-  return {
-    async exec(command: string, options?: ExecOptions): Promise<ExecResult> {
-      const startTime = performance.now();
-      let interrupted = false;
+  async exec(command: string, options?: ExecOptions): Promise<ExecResult> {
+    const startTime = performance.now();
+    let interrupted = false;
 
-      const cwd = options?.cwd ?? workingDirectory;
+    const cwd = options?.cwd ?? this.workingDirectory;
 
-      // Ensure cwd exists
-      if (!existsSync(cwd)) {
-        mkdirSync(cwd, { recursive: true });
+    // Ensure cwd exists
+    if (!existsSync(cwd)) {
+      mkdirSync(cwd, { recursive: true });
+    }
+
+    return new Promise<ExecResult>((resolve) => {
+      const proc = spawn("sh", ["-c", command], {
+        cwd,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+
+      let stdout = "";
+      let stderr = "";
+
+      proc.stdout.on("data", (data: Buffer) => {
+        stdout += data.toString();
+      });
+      proc.stderr.on("data", (data: Buffer) => {
+        stderr += data.toString();
+      });
+
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      if (options?.timeout) {
+        timeoutId = setTimeout(() => {
+          interrupted = true;
+          proc.kill("SIGKILL");
+        }, options.timeout);
       }
 
-      return new Promise<ExecResult>((resolve) => {
-        const proc = spawn("sh", ["-c", command], {
-          cwd,
-          stdio: ["ignore", "pipe", "pipe"],
-        });
-
-        let stdout = "";
-        let stderr = "";
-
-        proc.stdout.on("data", (data: Buffer) => {
-          stdout += data.toString();
-        });
-        proc.stderr.on("data", (data: Buffer) => {
-          stderr += data.toString();
-        });
-
-        let timeoutId: ReturnType<typeof setTimeout> | undefined;
-        if (options?.timeout) {
-          timeoutId = setTimeout(() => {
-            interrupted = true;
-            proc.kill("SIGKILL");
-          }, options.timeout);
-        }
-
-        proc.on("close", (exitCode: number | null) => {
-          if (timeoutId) clearTimeout(timeoutId);
-          const durationMs = Math.round(performance.now() - startTime);
-          resolve({
-            stdout,
-            stderr,
-            exitCode: exitCode ?? (interrupted ? 137 : 1),
-            durationMs,
-            interrupted,
-          });
-        });
-
-        proc.on("error", (err: Error) => {
-          if (timeoutId) clearTimeout(timeoutId);
-          const durationMs = Math.round(performance.now() - startTime);
-          resolve({
-            stdout: "",
-            stderr: err.message,
-            exitCode: 1,
-            durationMs,
-            interrupted: false,
-          });
+      proc.on("close", (exitCode: number | null) => {
+        if (timeoutId) clearTimeout(timeoutId);
+        const durationMs = Math.round(performance.now() - startTime);
+        resolve({
+          stdout,
+          stderr,
+          exitCode: exitCode ?? (interrupted ? 137 : 1),
+          durationMs,
+          interrupted,
         });
       });
-    },
 
-    async readFile(path: string): Promise<string> {
-      const fullPath = resolvePath(path);
-      return readFile(fullPath, "utf-8");
-    },
+      proc.on("error", (err: Error) => {
+        if (timeoutId) clearTimeout(timeoutId);
+        const durationMs = Math.round(performance.now() - startTime);
+        resolve({
+          stdout: "",
+          stderr: err.message,
+          exitCode: 1,
+          durationMs,
+          interrupted: false,
+        });
+      });
+    });
+  }
 
-    async writeFile(path: string, content: string): Promise<void> {
-      const fullPath = resolvePath(path);
-      // Create parent directories
-      await mkdir(dirname(fullPath), { recursive: true });
-      await writeFile(fullPath, content, "utf-8");
-    },
+  async readFile(path: string): Promise<string> {
+    const fullPath = this.resolvePath(path);
+    return readFile(fullPath, "utf-8");
+  }
 
-    async readDir(path: string): Promise<DirEntry[]> {
-      const fullPath = resolvePath(path);
-      const entries = await readdir(fullPath, { withFileTypes: true });
-      return entries.map((e) => ({
-        name: e.name,
-        isDirectory: e.isDirectory(),
-      }));
-    },
+  async writeFile(path: string, content: string): Promise<void> {
+    const fullPath = this.resolvePath(path);
+    // Create parent directories
+    await mkdir(dirname(fullPath), { recursive: true });
+    await writeFile(fullPath, content, "utf-8");
+  }
 
-    async fileExists(path: string): Promise<boolean> {
-      const fullPath = resolvePath(path);
-      try {
-        await access(fullPath);
-        return true;
-      } catch {
-        return false;
-      }
-    },
+  async readDir(path: string): Promise<DirEntry[]> {
+    const fullPath = this.resolvePath(path);
+    const entries = await readdir(fullPath, { withFileTypes: true });
+    return entries.map((e) => ({
+      name: e.name,
+      isDirectory: e.isDirectory(),
+    }));
+  }
 
-    async isDirectory(path: string): Promise<boolean> {
-      const fullPath = resolvePath(path);
-      try {
-        const s = await stat(fullPath);
-        return s.isDirectory();
-      } catch {
-        return false;
-      }
-    },
+  async fileExists(path: string): Promise<boolean> {
+    const fullPath = this.resolvePath(path);
+    try {
+      await access(fullPath);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
-    async destroy(): Promise<void> {
-      // No cleanup needed for local sandbox
-    },
+  async isDirectory(path: string): Promise<boolean> {
+    const fullPath = this.resolvePath(path);
+    try {
+      const s = await stat(fullPath);
+      return s.isDirectory();
+    } catch {
+      return false;
+    }
+  }
 
-    // Local sandbox has no remote id
-    id: undefined,
-  };
+  async destroy(): Promise<void> {
+    // No cleanup needed for local sandbox
+  }
+
+  // Local sandbox has no remote id
+  readonly id = undefined;
 }

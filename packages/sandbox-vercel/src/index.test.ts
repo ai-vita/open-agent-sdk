@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createVercelSandbox } from "./index.js";
+import { VercelSandbox } from "./index.js";
 
 // Mock the @vercel/sandbox module
 const { mockCommandResult, mockVercelInstance, mockVercelClass } = vi.hoisted(() => {
@@ -42,7 +42,7 @@ beforeEach(() => {
 describe("createVercelSandbox", () => {
   describe("exec", () => {
     it("executes a command and returns result", async () => {
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       const result = await sandbox.exec("echo hello");
       expect(result.stdout).toBe("output");
       expect(result.exitCode).toBe(0);
@@ -59,14 +59,14 @@ describe("createVercelSandbox", () => {
         stdout: vi.fn(async () => ""),
         stderr: vi.fn(async () => "error"),
       });
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       const result = await sandbox.exec("false");
       expect(result.exitCode).toBe(1);
     });
 
     it("handles errors gracefully", async () => {
       mockVercelInstance.runCommand.mockRejectedValue(new Error("connection lost"));
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       const result = await sandbox.exec("echo hi");
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("connection lost");
@@ -74,14 +74,14 @@ describe("createVercelSandbox", () => {
     });
 
     it("reconnects to existing sandbox by ID", async () => {
-      const sandbox = await createVercelSandbox({ sandboxId: "existing-456", ensureTools: false });
+      const sandbox = new VercelSandbox({ sandboxId: "existing-456", ensureTools: false });
       await sandbox.exec("pwd");
       expect(mockVercelClass.get).toHaveBeenCalledWith({ sandboxId: "existing-456" });
       expect(mockVercelClass.create).not.toHaveBeenCalled();
     });
 
     it("uses custom cwd when provided", async () => {
-      const sandbox = await createVercelSandbox({ cwd: "/custom/dir", ensureTools: false });
+      const sandbox = new VercelSandbox({ cwd: "/custom/dir", ensureTools: false });
       await sandbox.exec("ls");
       expect(mockVercelInstance.runCommand).toHaveBeenCalledWith(
         expect.objectContaining({ cwd: "/custom/dir" }),
@@ -91,14 +91,14 @@ describe("createVercelSandbox", () => {
 
   describe("filesystem operations", () => {
     it("reads a file by absolute path", async () => {
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       const content = await sandbox.readFile("/vercel/sandbox/test.txt");
       expect(content).toBe("file content");
       expect(mockVercelInstance.readFileToBuffer).toHaveBeenCalledWith({ path: "/vercel/sandbox/test.txt" });
     });
 
     it("reads a file by relative path, prepending cwd", async () => {
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       const content = await sandbox.readFile("relative.txt");
       expect(content).toBe("file content");
       expect(mockVercelInstance.readFileToBuffer).toHaveBeenCalledWith({
@@ -108,14 +108,14 @@ describe("createVercelSandbox", () => {
 
     it("throws when file is not found", async () => {
       mockVercelInstance.readFileToBuffer.mockResolvedValue(null as never);
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       await expect(sandbox.readFile("/vercel/sandbox/missing.txt")).rejects.toThrow(
         "File not found",
       );
     });
 
     it("writes a file", async () => {
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       await sandbox.writeFile("/vercel/sandbox/out.txt", "hello");
       expect(mockVercelInstance.writeFiles).toHaveBeenCalledWith([{
         path: "/vercel/sandbox/out.txt",
@@ -124,7 +124,7 @@ describe("createVercelSandbox", () => {
     });
 
     it("writes a file by relative path", async () => {
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       await sandbox.writeFile("out.txt", "world");
       expect(mockVercelInstance.writeFiles).toHaveBeenCalledWith([{
         path: "/vercel/sandbox/out.txt",
@@ -139,7 +139,7 @@ describe("createVercelSandbox", () => {
         ...mockCommandResult,
         stdout: vi.fn(async () => lsOutput),
       });
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       const entries = await sandbox.readDir("/vercel/sandbox");
       expect(entries).toHaveLength(2);
       expect(entries[0]).toEqual({ name: "subdir", isDirectory: true });
@@ -151,7 +151,7 @@ describe("createVercelSandbox", () => {
         ...mockCommandResult,
         stdout: vi.fn(async () => "yes"),
       });
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       expect(await sandbox.fileExists("/vercel/sandbox/file.txt")).toBe(true);
     });
 
@@ -160,7 +160,7 @@ describe("createVercelSandbox", () => {
         ...mockCommandResult,
         stdout: vi.fn(async () => "no"),
       });
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       expect(await sandbox.fileExists("/vercel/sandbox/missing.txt")).toBe(false);
     });
 
@@ -169,7 +169,7 @@ describe("createVercelSandbox", () => {
         ...mockCommandResult,
         stdout: vi.fn(async () => "yes"),
       });
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       expect(await sandbox.isDirectory("/vercel/sandbox")).toBe(true);
     });
 
@@ -178,32 +178,32 @@ describe("createVercelSandbox", () => {
         ...mockCommandResult,
         stdout: vi.fn(async () => "no"),
       });
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       expect(await sandbox.isDirectory("/vercel/sandbox/file.txt")).toBe(false);
     });
   });
 
   describe("lifecycle", () => {
     it("uses lazy initialization (doesn't create sandbox until first operation)", async () => {
-      await createVercelSandbox({ ensureTools: false });
+      new VercelSandbox({ ensureTools: false });
       expect(mockVercelClass.create).not.toHaveBeenCalled();
     });
 
     it("exposes sandbox id after first operation", async () => {
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       await sandbox.exec("pwd");
       expect(sandbox.id).toBe("mock-vercel-sandbox-123");
     });
 
     it("calls stop on the instance on destroy()", async () => {
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       await sandbox.exec("pwd"); // Initialize
       await sandbox.destroy();
       expect(mockVercelInstance.stop).toHaveBeenCalled();
     });
 
     it("destroy is a no-op when sandbox was never initialized", async () => {
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       await expect(sandbox.destroy()).resolves.toBeUndefined();
       expect(mockVercelInstance.stop).not.toHaveBeenCalled();
     });
@@ -211,7 +211,7 @@ describe("createVercelSandbox", () => {
 
   describe("rgPath", () => {
     it("exposes rgPath getter and setter", async () => {
-      const sandbox = await createVercelSandbox({ ensureTools: false });
+      const sandbox = new VercelSandbox({ ensureTools: false });
       expect(sandbox.rgPath).toBeUndefined();
       sandbox.rgPath = "/usr/bin/rg";
       expect(sandbox.rgPath).toBe("/usr/bin/rg");

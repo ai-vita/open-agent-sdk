@@ -1,4 +1,4 @@
-import { Sandbox as E2BSandbox } from "@e2b/code-interpreter";
+import { Sandbox as E2BCodeInterpreter } from "@e2b/code-interpreter";
 import type { Sandbox, ExecOptions, ExecResult, DirEntry } from "@open-agent-sdk/core";
 
 export interface E2BSandboxConfig {
@@ -14,138 +14,143 @@ export interface E2BSandboxConfig {
 }
 
 /**
- * Creates an E2B cloud sandbox implementing the Sandbox interface.
+ * E2B cloud sandbox implementing the Sandbox interface.
  * Uses lazy initialization — the sandbox is not provisioned until the first operation.
  * Supports reconnection via sandboxId.
  */
-export async function createE2BSandbox(config: E2BSandboxConfig = {}): Promise<Sandbox> {
-  const workingDirectory = config.cwd ?? "/home/user";
-  const timeout = config.timeout ?? 300000;
-  let sandboxId: string | undefined = config.sandboxId;
+export class E2BSandbox implements Sandbox {
+  private workingDirectory: string;
+  private timeout: number;
+  private sandboxId: string | undefined;
+  private e2bInstance: InstanceType<typeof E2BCodeInterpreter> | null = null;
+  private initPromise: Promise<InstanceType<typeof E2BCodeInterpreter>> | null = null;
 
-  // Lazy singleton — prevents race conditions with concurrent tool calls
-  let e2bInstance: InstanceType<typeof E2BSandbox> | null = null;
-  let initPromise: Promise<InstanceType<typeof E2BSandbox>> | null = null;
+  constructor(private config: E2BSandboxConfig = {}) {
+    this.workingDirectory = config.cwd ?? "/home/user";
+    this.timeout = config.timeout ?? 300000;
+    this.sandboxId = config.sandboxId;
+  }
 
-  async function getE2B(): Promise<InstanceType<typeof E2BSandbox>> {
-    if (e2bInstance) return e2bInstance;
-    if (initPromise) return initPromise;
+  private async getE2B(): Promise<InstanceType<typeof E2BCodeInterpreter>> {
+    if (this.e2bInstance) return this.e2bInstance;
+    if (this.initPromise) return this.initPromise;
 
-    initPromise = (async () => {
-      let sbx: InstanceType<typeof E2BSandbox>;
-      if (config.sandboxId) {
-        sbx = await E2BSandbox.connect(config.sandboxId);
+    this.initPromise = (async () => {
+      let sbx: InstanceType<typeof E2BCodeInterpreter>;
+      if (this.config.sandboxId) {
+        sbx = await E2BCodeInterpreter.connect(this.config.sandboxId);
       } else {
-        sbx = await E2BSandbox.create({
-          apiKey: config.apiKey,
-          timeoutMs: timeout,
-          metadata: config.metadata,
+        sbx = await E2BCodeInterpreter.create({
+          apiKey: this.config.apiKey,
+          timeoutMs: this.timeout,
+          metadata: this.config.metadata,
         });
-        sandboxId = sbx.sandboxId;
+        this.sandboxId = sbx.sandboxId;
       }
 
-      e2bInstance = sbx;
+      this.e2bInstance = sbx;
       return sbx;
     })();
 
-    return initPromise;
+    return this.initPromise;
   }
 
-  return {
-    async exec(command: string, options?: ExecOptions): Promise<ExecResult> {
-      const sbx = await getE2B();
-      const startTime = performance.now();
+  private resolvePath(path: string): string {
+    return path.startsWith("/") ? path : `${this.workingDirectory}/${path}`;
+  }
 
-      try {
-        const result = await sbx.commands.run(command, {
-          cwd: options?.cwd ?? workingDirectory,
-          timeoutMs: options?.timeout,
-        });
+  async exec(command: string, options?: ExecOptions): Promise<ExecResult> {
+    const sbx = await this.getE2B();
+    const startTime = performance.now();
 
-        return {
-          stdout: result.stdout ?? "",
-          stderr: result.stderr ?? "",
-          exitCode: result.exitCode ?? 0,
-          durationMs: Math.round(performance.now() - startTime),
-          interrupted: false,
-        };
-      } catch (error) {
-        const durationMs = Math.round(performance.now() - startTime);
+    try {
+      const result = await sbx.commands.run(command, {
+        cwd: options?.cwd ?? this.workingDirectory,
+        timeoutMs: options?.timeout,
+      });
 
-        if (error instanceof Error && /timeout|timed out/i.test(error.message)) {
-          return { stdout: "", stderr: "Command timed out", exitCode: 124, durationMs, interrupted: true };
-        }
+      return {
+        stdout: result.stdout ?? "",
+        stderr: result.stderr ?? "",
+        exitCode: result.exitCode ?? 0,
+        durationMs: Math.round(performance.now() - startTime),
+        interrupted: false,
+      };
+    } catch (error) {
+      const durationMs = Math.round(performance.now() - startTime);
 
-        const exitMatch = error instanceof Error ? error.message.match(/exit status (\d+)/i) : null;
-        return {
-          stdout: "",
-          stderr: error instanceof Error ? error.message : String(error),
-          exitCode: exitMatch ? parseInt(exitMatch[1], 10) : 1,
-          durationMs,
-          interrupted: false,
-        };
+      if (error instanceof Error && /timeout|timed out/i.test(error.message)) {
+        return { stdout: "", stderr: "Command timed out", exitCode: 124, durationMs, interrupted: true };
       }
-    },
 
-    async readFile(path: string): Promise<string> {
-      const sbx = await getE2B();
-      const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      return sbx.files.read(fullPath) as Promise<string>;
-    },
+      const exitMatch = error instanceof Error ? error.message.match(/exit status (\d+)/i) : null;
+      return {
+        stdout: "",
+        stderr: error instanceof Error ? error.message : String(error),
+        exitCode: exitMatch ? parseInt(exitMatch[1], 10) : 1,
+        durationMs,
+        interrupted: false,
+      };
+    }
+  }
 
-    async writeFile(path: string, content: string): Promise<void> {
-      const sbx = await getE2B();
-      const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      await sbx.files.write(fullPath, content);
-    },
+  async readFile(path: string): Promise<string> {
+    const sbx = await this.getE2B();
+    const fullPath = this.resolvePath(path);
+    return sbx.files.read(fullPath) as Promise<string>;
+  }
 
-    async readDir(path: string): Promise<DirEntry[]> {
-      const sbx = await getE2B();
-      const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      const entries = await sbx.files.list(fullPath) as Array<{ name: string; type?: string; isDir?: boolean }>;
-      return entries.map((e) => ({
-        name: e.name,
-        isDirectory: e.type === "dir" || e.isDir === true,
-      }));
-    },
+  async writeFile(path: string, content: string): Promise<void> {
+    const sbx = await this.getE2B();
+    const fullPath = this.resolvePath(path);
+    await sbx.files.write(fullPath, content);
+  }
 
-    async fileExists(path: string): Promise<boolean> {
-      const sbx = await getE2B();
-      const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
-      try {
-        await sbx.files.read(fullPath);
-        return true;
-      } catch {
-        try {
-          await sbx.files.list(fullPath);
-          return true;
-        } catch {
-          return false;
-        }
-      }
-    },
+  async readDir(path: string): Promise<DirEntry[]> {
+    const sbx = await this.getE2B();
+    const fullPath = this.resolvePath(path);
+    const entries = await sbx.files.list(fullPath) as Array<{ name: string; type?: string; isDir?: boolean }>;
+    return entries.map((e) => ({
+      name: e.name,
+      isDirectory: e.type === "dir" || e.isDir === true,
+    }));
+  }
 
-    async isDirectory(path: string): Promise<boolean> {
-      const sbx = await getE2B();
-      const fullPath = path.startsWith("/") ? path : `${workingDirectory}/${path}`;
+  async fileExists(path: string): Promise<boolean> {
+    const sbx = await this.getE2B();
+    const fullPath = this.resolvePath(path);
+    try {
+      await sbx.files.read(fullPath);
+      return true;
+    } catch {
       try {
         await sbx.files.list(fullPath);
         return true;
       } catch {
         return false;
       }
-    },
+    }
+  }
 
-    async destroy(): Promise<void> {
-      if (e2bInstance) {
-        await e2bInstance.kill();
-        e2bInstance = null;
-      }
-    },
+  async isDirectory(path: string): Promise<boolean> {
+    const sbx = await this.getE2B();
+    const fullPath = this.resolvePath(path);
+    try {
+      await sbx.files.list(fullPath);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
-    get id() {
-      return sandboxId;
-    },
-  };
+  async destroy(): Promise<void> {
+    if (this.e2bInstance) {
+      await this.e2bInstance.kill();
+      this.e2bInstance = null;
+    }
+  }
+
+  get id() {
+    return this.sandboxId;
+  }
 }
-

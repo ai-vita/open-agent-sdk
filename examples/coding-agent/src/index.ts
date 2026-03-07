@@ -15,7 +15,7 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { wrapLanguageModel } from "ai";
 import { runAgent, stepCountIs } from "@open-agent-sdk/core";
-import { createLocalSandbox } from "@open-agent-sdk/sandbox-local";
+import { LocalSandbox } from "@open-agent-sdk/sandbox-local";
 import { createAgentTools } from "@open-agent-sdk/tools";
 import { discoverSkills, skillsToXml } from "@open-agent-sdk/skills";
 import { anthropicPromptCacheMiddleware } from "@open-agent-sdk/provider-anthropic";
@@ -35,7 +35,7 @@ async function main() {
   // ── 2. Sandbox ──────────────────────────────────────────────────────────────
   // Local sandbox: commands run on the host machine in a temp directory
   const cwd = process.cwd();
-  const sandbox = createLocalSandbox({ cwd });
+  const sandbox = new LocalSandbox({ cwd });
 
   // ── 3. Tools ────────────────────────────────────────────────────────────────
   const { tools } = createAgentTools(sandbox, {

@@ -2,14 +2,14 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createLocalSandbox } from "./index.js";
+import { LocalSandbox } from "./index.js";
 
 let tmpDir: string;
-let sandbox: ReturnType<typeof createLocalSandbox>;
+let sandbox: LocalSandbox;
 
 beforeEach(() => {
   tmpDir = mkdtempSync(join(tmpdir(), "sandbox-test-"));
-  sandbox = createLocalSandbox({ cwd: tmpDir });
+  sandbox = new LocalSandbox({ cwd: tmpDir });
 });
 
 afterEach(() => {
