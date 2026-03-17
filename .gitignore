@@ -3,3 +3,7 @@ dist
 *.tsbuildinfo
 CLAUDE.local.md
 .DS_Store
+
+.env.local
+.session.jsonl
+*.bun-build

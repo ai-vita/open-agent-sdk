@@ -17,6 +17,15 @@ vitest run packages/core/src/cache.test.ts     # run a single test file
 pnpm typecheck            # type-check all packages
 ```
 
+Run the `oa` CLI (standalone coding agent):
+```bash
+pnpm --filter @open-agent-sdk/cli start            # run directly from source
+pnpm --filter @open-agent-sdk/cli build             # build bundled JS
+pnpm --filter @open-agent-sdk/cli compile           # compile standalone binary (requires bun)
+# or install globally after publishing:
+# npm i -g @open-agent-sdk/cli && oa
+```
+
 Run the example coding agent:
 ```bash
 cp examples/coding-agent/.env examples/coding-agent/.env.local
@@ -34,6 +43,7 @@ pnpm --filter @open-agent-sdk/example-coding-agent chatbot  # interactive chatbo
 - **packages/sandbox-local** — `LocalSandbox` (real filesystem + child_process shell)
 - **packages/sandbox-e2b** — `E2BSandbox` (cloud sandbox, peer dep: @e2b/code-interpreter)
 - **packages/sandbox-vercel** — `VercelSandbox` (Firecracker, peer dep: @vercel/sandbox)
+- **packages/cli** — `oa` standalone CLI coding agent. Bundled with `tsup`, optional `bun build --compile` for standalone binary.
 - **packages/sandbox-memory** — `MemorySandbox` (in-memory, for testing)
 
 ## Architecture
