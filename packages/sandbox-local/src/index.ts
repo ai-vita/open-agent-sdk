@@ -1,15 +1,8 @@
-import { existsSync, mkdirSync } from "node:fs";
-import {
-  readFile,
-  writeFile,
-  readdir,
-  stat,
-  mkdir,
-  access,
-} from "node:fs/promises";
 import { spawn } from "node:child_process";
+import { existsSync, mkdirSync } from "node:fs";
+import { access, mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import type { Sandbox, ExecOptions, ExecResult, DirEntry } from "@open-agent-sdk/core";
+import type { DirEntry, ExecOptions, ExecResult, Sandbox } from "@open-agent-sdk/core";
 
 export interface LocalSandboxConfig {
   /** Working directory for relative paths (default: /tmp) */

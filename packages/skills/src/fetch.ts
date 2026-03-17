@@ -10,9 +10,7 @@ interface GitHubContentItem {
 function parseGitHubRef(ref: string): { owner: string; repo: string; skillName: string } {
   const parts = ref.split("/");
   if (parts.length < 3) {
-    throw new Error(
-      `Invalid skill reference "${ref}". Expected format: owner/repo/skillName`,
-    );
+    throw new Error(`Invalid skill reference "${ref}". Expected format: owner/repo/skillName`);
   }
   return { owner: parts[0], repo: parts[1], skillName: parts[parts.length - 1] };
 }
@@ -30,17 +28,15 @@ async function fetchDirectoryContents(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Failed to fetch "${path}": ${response.status} ${response.statusText}`,
-    );
+    throw new Error(`Failed to fetch "${path}": ${response.status} ${response.statusText}`);
   }
 
-  const items: GitHubContentItem[] = await response.json() as GitHubContentItem[];
+  const items: GitHubContentItem[] = (await response.json()) as GitHubContentItem[];
   const files: Record<string, string> = {};
 
   await Promise.all(
     items.map(async (item) => {
-      const relativePath = item.path.startsWith(basePath + "/")
+      const relativePath = item.path.startsWith(`${basePath}/`)
         ? item.path.slice(basePath.length + 1)
         : item.path;
 

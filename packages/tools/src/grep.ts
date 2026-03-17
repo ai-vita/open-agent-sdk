@@ -1,6 +1,6 @@
+import type { Sandbox, ToolConfig } from "@open-agent-sdk/core";
 import { tool, zodSchema } from "ai";
 import { z } from "zod";
-import type { Sandbox, ToolConfig } from "@open-agent-sdk/core";
 
 export interface GrepMatch {
   file: string;
@@ -38,11 +38,7 @@ const grepInputSchema = z.object({
     .nullable()
     .default(null)
     .describe("File or directory to search in (defaults to cwd)"),
-  glob: z
-    .string()
-    .nullable()
-    .default(null)
-    .describe('Glob pattern to filter files (e.g. "*.ts")'),
+  glob: z.string().nullable().default(null).describe('Glob pattern to filter files (e.g. "*.ts")'),
   output_mode: z
     .enum(["content", "files_with_matches", "count"])
     .nullable()
@@ -228,7 +224,7 @@ async function runWithGrep(opts: {
         const colonIdx = line.lastIndexOf(":");
         const file = line.slice(0, colonIdx);
         const count = parseInt(line.slice(colonIdx + 1), 10);
-        return { file, count: isNaN(count) ? 0 : count };
+        return { file, count: Number.isNaN(count) ? 0 : count };
       })
       .filter((e) => e.count > 0);
     return { counts, total: counts.reduce((s, c) => s + c.count, 0) };

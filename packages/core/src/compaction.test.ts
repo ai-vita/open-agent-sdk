@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
 import type { ModelMessage } from "ai";
+import { describe, expect, it } from "vitest";
 import {
-  findCutPoint,
-  extractFileOperations,
-  serializeMessages,
-  estimateMessageTokens,
   contextNeedsCompaction,
+  estimateMessageTokens,
+  extractFileOperations,
+  findCutPoint,
+  serializeMessages,
 } from "./compaction.js";
 
 // Helper to create messages of approximate token size
@@ -13,7 +13,14 @@ function makeMessage(role: "user" | "assistant" | "tool", text: string): ModelMe
   if (role === "tool") {
     return {
       role: "tool",
-      content: [{ type: "tool-result", toolCallId: "tc1", toolName: "test", output: { type: "text" as const, value: text } }],
+      content: [
+        {
+          type: "tool-result",
+          toolCallId: "tc1",
+          toolName: "test",
+          output: { type: "text" as const, value: text },
+        },
+      ],
     } as ModelMessage;
   }
   return { role, content: text } as ModelMessage;
@@ -114,9 +121,7 @@ describe("extractFileOperations", () => {
   });
 
   it("handles file_path input key", () => {
-    const messages: ModelMessage[] = [
-      makeToolCallMessage("Read", { file_path: "/src/d.ts" }),
-    ];
+    const messages: ModelMessage[] = [makeToolCallMessage("Read", { file_path: "/src/d.ts" })];
 
     const ops = extractFileOperations(messages);
     expect(ops.read.has("/src/d.ts")).toBe(true);
@@ -154,9 +159,7 @@ describe("serializeMessages", () => {
   });
 
   it("serializes assistant tool calls", () => {
-    const messages: ModelMessage[] = [
-      makeToolCallMessage("read", { path: "/x.ts" }),
-    ];
+    const messages: ModelMessage[] = [makeToolCallMessage("read", { path: "/x.ts" })];
     const result = serializeMessages(messages);
     expect(result).toContain("[Assistant tool calls]:");
     expect(result).toContain('read({"path":"/x.ts"})');

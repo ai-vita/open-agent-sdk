@@ -1,8 +1,4 @@
-import {
-  generateText,
-  type LanguageModel,
-  type ModelMessage,
-} from "ai";
+import { generateText, type LanguageModel, type ModelMessage } from "ai";
 
 // ---------------------------------------------------------------------------
 // Token estimation
@@ -487,7 +483,8 @@ export async function compactConversation(
     },
     {
       role: "assistant",
-      content: "I have reviewed the summary of our previous conversation and will continue from there.",
+      content:
+        "I have reviewed the summary of our previous conversation and will continue from there.",
     },
     ...recentMessages,
   ];

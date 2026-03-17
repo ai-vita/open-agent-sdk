@@ -13,11 +13,15 @@ describe("resolveWorkspacePath", () => {
   });
 
   it("resolves dot-dot within root", () => {
-    expect(resolveWorkspacePath(root, "/workspace/src/../lib/util.ts")).toBe("/workspace/lib/util.ts");
+    expect(resolveWorkspacePath(root, "/workspace/src/../lib/util.ts")).toBe(
+      "/workspace/lib/util.ts",
+    );
   });
 
   it("throws on absolute path escaping root via dot-dot", () => {
-    expect(() => resolveWorkspacePath(root, "/workspace/../../etc/passwd")).toThrow("outside the workspace");
+    expect(() => resolveWorkspacePath(root, "/workspace/../../etc/passwd")).toThrow(
+      "outside the workspace",
+    );
   });
 
   it("throws on relative path escaping root", () => {
@@ -37,6 +41,8 @@ describe("resolveWorkspacePath", () => {
   });
 
   it("normalizes single dot component", () => {
-    expect(resolveWorkspacePath(root, "/workspace/./src/./index.ts")).toBe("/workspace/src/index.ts");
+    expect(resolveWorkspacePath(root, "/workspace/./src/./index.ts")).toBe(
+      "/workspace/src/index.ts",
+    );
   });
 });

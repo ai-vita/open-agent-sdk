@@ -1,11 +1,11 @@
 import {
   generateText,
-  streamText,
-  stepCountIs,
   type LanguageModel,
   type ModelMessage,
   type StepResult,
   type StopCondition,
+  stepCountIs,
+  streamText,
   type ToolSet,
 } from "ai";
 import type { AgentEvent } from "./agent-events.js";
@@ -164,7 +164,10 @@ async function* runStreaming(opts: {
         yield { type: "step-complete", step: part, stepIndex: stepIndex++ };
         break;
       case "error":
-        yield { type: "error", error: part.error instanceof Error ? part.error : new Error(String(part.error)) };
+        yield {
+          type: "error",
+          error: part.error instanceof Error ? part.error : new Error(String(part.error)),
+        };
         break;
     }
   }
@@ -223,10 +226,7 @@ function buildStopCondition(
   return [defaultStop, ...conditions];
 }
 
-function collectStepEvents(
-  step: StepResult<ToolSet>,
-  stepIndex: number,
-): AgentEvent[] {
+function collectStepEvents(step: StepResult<ToolSet>, stepIndex: number): AgentEvent[] {
   const events: AgentEvent[] = [];
 
   if (step.text) {

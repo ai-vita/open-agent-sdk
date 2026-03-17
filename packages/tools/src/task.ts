@@ -1,13 +1,13 @@
 import {
   generateText,
-  streamText,
-  stepCountIs,
   type LanguageModel,
   type StepResult,
   type StopCondition,
+  stepCountIs,
+  streamText,
   type ToolSet,
-  type UIMessageStreamWriter,
   tool,
+  type UIMessageStreamWriter,
   zodSchema,
 } from "ai";
 import { z } from "zod";
@@ -105,9 +105,7 @@ function filterTools(
   additionalTools?: ToolSet,
 ): ToolSet {
   let result: ToolSet = allowedTools
-    ? Object.fromEntries(
-        allowedTools.filter((n) => allTools[n]).map((n) => [n, allTools[n]]),
-      )
+    ? Object.fromEntries(allowedTools.filter((n) => allTools[n]).map((n) => [n, allTools[n]]))
     : { ...allTools };
 
   if (additionalTools) result = { ...result, ...additionalTools };
@@ -222,7 +220,10 @@ export function createTaskTool(config: TaskToolConfig) {
           result: result.text,
           usage:
             result.usage.inputTokens !== undefined
-              ? { input_tokens: result.usage.inputTokens, output_tokens: result.usage.outputTokens ?? 0 }
+              ? {
+                  input_tokens: result.usage.inputTokens,
+                  output_tokens: result.usage.outputTokens ?? 0,
+                }
               : undefined,
           duration_ms: Math.round(performance.now() - startTime),
           subagent: subagent_type,

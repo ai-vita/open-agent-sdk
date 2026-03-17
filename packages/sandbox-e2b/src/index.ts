@@ -1,5 +1,5 @@
 import { Sandbox as E2BCodeInterpreter } from "@e2b/code-interpreter";
-import type { Sandbox, ExecOptions, ExecResult, DirEntry } from "@open-agent-sdk/core";
+import type { DirEntry, ExecOptions, ExecResult, Sandbox } from "@open-agent-sdk/core";
 
 export interface E2BSandboxConfig {
   apiKey?: string;
@@ -80,7 +80,13 @@ export class E2BSandbox implements Sandbox {
       const durationMs = Math.round(performance.now() - startTime);
 
       if (error instanceof Error && /timeout|timed out/i.test(error.message)) {
-        return { stdout: "", stderr: "Command timed out", exitCode: 124, durationMs, interrupted: true };
+        return {
+          stdout: "",
+          stderr: "Command timed out",
+          exitCode: 124,
+          durationMs,
+          interrupted: true,
+        };
       }
 
       const exitMatch = error instanceof Error ? error.message.match(/exit status (\d+)/i) : null;
@@ -109,7 +115,11 @@ export class E2BSandbox implements Sandbox {
   async readDir(path: string): Promise<DirEntry[]> {
     const sbx = await this.getE2B();
     const fullPath = this.resolvePath(path);
-    const entries = await sbx.files.list(fullPath) as Array<{ name: string; type?: string; isDir?: boolean }>;
+    const entries = (await sbx.files.list(fullPath)) as Array<{
+      name: string;
+      type?: string;
+      isDir?: boolean;
+    }>;
     return entries.map((e) => ({
       name: e.name,
       isDirectory: e.type === "dir" || e.isDir === true,

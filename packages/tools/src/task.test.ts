@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
-import { createTaskTool } from "./task.js";
-import { jsonSchema } from "ai";
 import type { LanguageModel, ToolSet } from "ai";
+import { jsonSchema } from "ai";
+import { describe, expect, it, vi } from "vitest";
+import { createTaskTool } from "./task.js";
 
 function createMockModel(): LanguageModel {
   return {
@@ -21,7 +21,11 @@ function createMockModel(): LanguageModel {
           controller.enqueue({ type: "text-start", id: "text-1" });
           controller.enqueue({ type: "text-delta", id: "text-1", delta: "Task completed" });
           controller.enqueue({ type: "text-end", id: "text-1" });
-          controller.enqueue({ type: "finish", finishReason: "stop", usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30 } });
+          controller.enqueue({
+            type: "finish",
+            finishReason: "stop",
+            usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30 },
+          });
           controller.close();
         },
       }),
@@ -37,7 +41,7 @@ describe("createTaskTool", () => {
     const tools: ToolSet = {};
     const taskTool = createTaskTool({ model, tools });
 
-    const result = await taskTool.execute!(
+    const result = await taskTool.execute?.(
       {
         description: "test task",
         prompt: "Do something",
@@ -57,7 +61,7 @@ describe("createTaskTool", () => {
     const model = createMockModel();
     const taskTool = createTaskTool({ model, tools: {} });
 
-    const result = await taskTool.execute!(
+    const result = await taskTool.execute?.(
       {
         description: "test",
         prompt: "Do X",
@@ -90,7 +94,7 @@ describe("createTaskTool", () => {
     });
 
     // This just checks the tool executes without error
-    const result = await taskTool.execute!(
+    const result = await taskTool.execute?.(
       {
         description: "read task",
         prompt: "Read something",
@@ -109,7 +113,7 @@ describe("createTaskTool", () => {
     const onStepFinish = vi.fn();
 
     const taskTool = createTaskTool({ model, tools: {}, defaultOnStepFinish: onStepFinish });
-    await taskTool.execute!(
+    await taskTool.execute?.(
       { description: "t", prompt: "p", subagent_type: "g", system_prompt: null, tools: null },
       undefined as never,
     );
@@ -121,11 +125,13 @@ describe("createTaskTool", () => {
   it("handles errors gracefully", async () => {
     const model = {
       ...(createMockModel() as Record<string, unknown>),
-      doGenerate: vi.fn(async () => { throw new Error("Model error"); }),
+      doGenerate: vi.fn(async () => {
+        throw new Error("Model error");
+      }),
     } as unknown as LanguageModel;
 
     const taskTool = createTaskTool({ model, tools: {} });
-    const result = await taskTool.execute!(
+    const result = await taskTool.execute?.(
       { description: "t", prompt: "p", subagent_type: "g", system_prompt: null, tools: null },
       undefined as never,
     );

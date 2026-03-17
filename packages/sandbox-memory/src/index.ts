@@ -1,5 +1,5 @@
-import type { DirEntry, ExecOptions, ExecResult, Sandbox } from "@open-agent-sdk/core";
 import path from "node:path";
+import type { DirEntry, ExecOptions, ExecResult, Sandbox } from "@open-agent-sdk/core";
 
 export interface MemorySandboxOptions {
   /** Pre-populate the in-memory filesystem */
@@ -33,7 +33,10 @@ export class MemorySandbox implements Sandbox {
     const start = Date.now();
 
     // Support echo command
-    const echoMatch = command.match(/^echo\s+"(.*)"\s*$/) ?? command.match(/^echo\s+'(.*)'\s*$/) ?? command.match(/^echo\s+(.*)\s*$/);
+    const echoMatch =
+      command.match(/^echo\s+"(.*)"\s*$/) ??
+      command.match(/^echo\s+'(.*)'\s*$/) ??
+      command.match(/^echo\s+(.*)\s*$/);
     if (echoMatch) {
       return {
         stdout: echoMatch[1],

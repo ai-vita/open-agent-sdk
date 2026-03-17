@@ -1,9 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
-import { LRUCacheStore, cached } from "./cache.js";
-import { middleTruncate } from "./utils.js";
-import { composeStops } from "./agent.js";
 import { tool } from "ai";
+import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { composeStops } from "./agent.js";
+import { cached, LRUCacheStore } from "./cache.js";
+import { middleTruncate } from "./utils.js";
 
 describe("LRUCacheStore", () => {
   it("stores and retrieves entries", () => {
@@ -58,8 +58,8 @@ describe("cached()", () => {
     });
 
     const cachedTool = cached(testTool, "Test");
-    await cachedTool.execute!({ value: "hello" }, undefined as never);
-    await cachedTool.execute!({ value: "hello" }, undefined as never);
+    await cachedTool.execute?.({ value: "hello" }, undefined as never);
+    await cachedTool.execute?.({ value: "hello" }, undefined as never);
 
     expect(executeSpy).toHaveBeenCalledTimes(1);
   });
@@ -73,8 +73,8 @@ describe("cached()", () => {
     });
 
     const cachedTool = cached(testTool, "Test");
-    await cachedTool.execute!({}, undefined as never);
-    await cachedTool.execute!({}, undefined as never);
+    await cachedTool.execute?.({}, undefined as never);
+    await cachedTool.execute?.({}, undefined as never);
 
     expect(executeSpy).toHaveBeenCalledTimes(2);
   });
@@ -83,9 +83,9 @@ describe("cached()", () => {
     const testTool = makeTestTool();
     const cachedTool = cached(testTool, "Test");
 
-    await cachedTool.execute!({ value: "x" }, undefined as never);
-    await cachedTool.execute!({ value: "x" }, undefined as never);
-    await cachedTool.execute!({ value: "y" }, undefined as never);
+    await cachedTool.execute?.({ value: "x" }, undefined as never);
+    await cachedTool.execute?.({ value: "x" }, undefined as never);
+    await cachedTool.execute?.({ value: "y" }, undefined as never);
 
     const stats = await cachedTool.getStats();
     expect(stats.hits).toBe(1);
@@ -102,9 +102,9 @@ describe("cached()", () => {
     });
     const cachedTool = cached(testTool, "Test");
 
-    await cachedTool.execute!({ value: "abc" }, undefined as never);
+    await cachedTool.execute?.({ value: "abc" }, undefined as never);
     await cachedTool.clearCache();
-    await cachedTool.execute!({ value: "abc" }, undefined as never);
+    await cachedTool.execute?.({ value: "abc" }, undefined as never);
 
     expect(executeSpy).toHaveBeenCalledTimes(2);
   });
@@ -123,7 +123,7 @@ describe("cached()", () => {
 
     const cachedTool = cached(testTool, "Test", { store, ttl: 100 });
     // This should miss because timestamp: 0 is expired
-    await cachedTool.execute!({ value: "hello" }, undefined as never);
+    await cachedTool.execute?.({ value: "hello" }, undefined as never);
 
     expect(executeSpy).toHaveBeenCalledTimes(1);
   });

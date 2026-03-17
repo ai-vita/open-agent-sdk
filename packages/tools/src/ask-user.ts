@@ -50,7 +50,9 @@ export function createAskUserTool(onQuestion?: AskUserResponseHandler) {
   return tool({
     description: ASK_USER_DESCRIPTION,
     inputSchema: zodSchema(askUserInputSchema),
-    execute: async ({ question }: AskUserInput): Promise<AskUserOutput | AskUserAnswerOutput | AskUserError> => {
+    execute: async ({
+      question,
+    }: AskUserInput): Promise<AskUserOutput | AskUserAnswerOutput | AskUserError> => {
       if (!question) return { error: "question is required" };
 
       if (onQuestion) {

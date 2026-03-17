@@ -1,62 +1,54 @@
 // Sandbox interface
-export type { Sandbox, ExecOptions, ExecResult, DirEntry } from "./sandbox.js";
 
-// Tool types
-export type { Tool, ToolSet, ToolConfig, SDKToolOptions, ToolResult } from "./tool-types.js";
-
+export type { AgentOptions, StopWhen } from "./agent.js";
+// Agent loop
+export { budgetExceeded, composeStops, runAgent, stepCountIs } from "./agent.js";
+export type { AgentCompactionConfig, AgentConfig } from "./agent-class.js";
+// Agent class
+export { Agent } from "./agent-class.js";
 // Agent events
 export type {
   AgentEvent,
   AssistantMessageEvent,
+  DoneEvent,
+  ErrorEvent,
+  StepCompleteEvent,
+  TextDeltaEvent,
   ToolCallEvent,
   ToolResultEvent,
-  TextDeltaEvent,
-  StepCompleteEvent,
-  ErrorEvent,
-  DoneEvent,
 } from "./agent-events.js";
-
-// Agent loop
-export { runAgent, stepCountIs, budgetExceeded, composeStops } from "./agent.js";
-export type { AgentOptions, StopWhen } from "./agent.js";
-
-// Agent class
-export { Agent } from "./agent-class.js";
-export type { AgentConfig, AgentCompactionConfig } from "./agent-class.js";
-
+export type { CachedTool, CacheEntry, CacheOptions, CacheStats, CacheStore } from "./cache.js";
+// Caching
+export { cached, LRUCacheStore } from "./cache.js";
+export type {
+  CompactConversationConfig,
+  CompactConversationResult,
+  CompactConversationState,
+  FileOperations,
+} from "./compaction.js";
 // Context compaction
 export {
   compactConversation,
   contextNeedsCompaction,
-  estimateTokens,
-  estimateMessageTokens,
   estimateMessagesTokens,
-  findCutPoint,
+  estimateMessageTokens,
+  estimateTokens,
   extractFileOperations,
+  findCutPoint,
   serializeMessages,
 } from "./compaction.js";
-export type {
-  CompactConversationConfig,
-  CompactConversationState,
-  CompactConversationResult,
-  FileOperations,
-} from "./compaction.js";
-
-// Caching
-export { cached, LRUCacheStore } from "./cache.js";
-export type { CacheStore, CacheEntry, CacheOptions, CacheStats, CachedTool } from "./cache.js";
-
-// Workspace path safety
-export { resolveWorkspacePath } from "./workspace-path.js";
-
+export type { DirEntry, ExecOptions, ExecResult, Sandbox } from "./sandbox.js";
 // Session persistence
 export { SessionManager } from "./session/session-manager.js";
 export type {
-  SessionEntry,
-  MessageEntry,
-  CompactionEntry,
   BranchSummaryEntry,
+  CompactionEntry,
+  MessageEntry,
+  SessionEntry,
 } from "./session/types.js";
-
+// Tool types
+export type { SDKToolOptions, Tool, ToolConfig, ToolResult, ToolSet } from "./tool-types.js";
 // Utilities
-export { middleTruncate, isToolCallPart, isToolResultPart, sleep, clamp } from "./utils.js";
+export { clamp, isToolCallPart, isToolResultPart, middleTruncate, sleep } from "./utils.js";
+// Workspace path safety
+export { resolveWorkspacePath } from "./workspace-path.js";

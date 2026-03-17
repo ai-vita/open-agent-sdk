@@ -1,14 +1,8 @@
-import type { ModelMessage } from "ai";
-import { existsSync, readFileSync, appendFileSync, writeFileSync } from "node:fs";
-import { mkdirSync } from "node:fs";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
-import type {
-  SessionEntry,
-  MessageEntry,
-  CompactionEntry,
-  BranchSummaryEntry,
-} from "./types.js";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import type { ModelMessage } from "ai";
+import type { BranchSummaryEntry, CompactionEntry, MessageEntry, SessionEntry } from "./types.js";
 
 /**
  * JSONL-based session manager with tree structure for conversation persistence.
@@ -77,7 +71,8 @@ export class SessionManager {
         });
         messages.push({
           role: "assistant",
-          content: "I have reviewed the summary of our previous conversation and will continue from there.",
+          content:
+            "I have reviewed the summary of our previous conversation and will continue from there.",
         });
       } else if (entry.type === "branch_summary") {
         messages.push({

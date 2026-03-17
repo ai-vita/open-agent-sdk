@@ -1,6 +1,6 @@
 import { tool, zodSchema } from "ai";
-import { z } from "zod";
 import Parallel from "parallel-web";
+import { z } from "zod";
 
 export interface WebSearchResult {
   title: string;
@@ -25,8 +25,16 @@ export interface WebSearchConfig {
 
 const webSearchSchema = z.object({
   query: z.string().describe("The search query"),
-  allowed_domains: z.array(z.string()).nullable().default(null).describe("Only include results from these domains"),
-  blocked_domains: z.array(z.string()).nullable().default(null).describe("Never include results from these domains"),
+  allowed_domains: z
+    .array(z.string())
+    .nullable()
+    .default(null)
+    .describe("Only include results from these domains"),
+  blocked_domains: z
+    .array(z.string())
+    .nullable()
+    .default(null)
+    .describe("Never include results from these domains"),
 });
 
 type WebSearchInput = z.infer<typeof webSearchSchema>;
@@ -42,7 +50,11 @@ export function createWebSearchTool(config: WebSearchConfig) {
   return tool({
     description: WEB_SEARCH_DESCRIPTION,
     inputSchema: zodSchema(webSearchSchema),
-    execute: async ({ query, allowed_domains, blocked_domains }: WebSearchInput): Promise<WebSearchOutput | WebSearchError> => {
+    execute: async ({
+      query,
+      allowed_domains,
+      blocked_domains,
+    }: WebSearchInput): Promise<WebSearchOutput | WebSearchError> => {
       try {
         const client = new Parallel({ apiKey });
 
@@ -61,7 +73,9 @@ export function createWebSearchTool(config: WebSearchConfig) {
           ...(sourcePolicy && { source_policy: sourcePolicy }),
         });
 
-        const results: WebSearchResult[] = ((search.results || []) as { title?: string; url?: string; excerpts?: string[] }[]).map((r) => ({
+        const results: WebSearchResult[] = (
+          (search.results || []) as { title?: string; url?: string; excerpts?: string[] }[]
+        ).map((r) => ({
           title: r.title ?? "",
           url: r.url ?? "",
           snippet: r.excerpts?.join("\n") ?? "",

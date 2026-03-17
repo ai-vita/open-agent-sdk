@@ -1,14 +1,14 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
-import { writeFile, mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { parseSkillMetadata } from "./parser.js";
+import type { Sandbox } from "@open-agent-sdk/core";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { discoverSkills } from "./discovery.js";
-import { skillsToXml } from "./xml.js";
+import { parseSkillMetadata } from "./parser.js";
 import { setupAgentEnvironment } from "./setup.js";
 import { createSkillTool } from "./skill-tool.js";
-import type { Sandbox } from "@open-agent-sdk/core";
+import { skillsToXml } from "./xml.js";
 
 const VALID_SKILL_MD = `---
 name: test-skill
@@ -41,9 +41,7 @@ describe("parseSkillMetadata", () => {
   });
 
   it("throws when no frontmatter", () => {
-    expect(() => parseSkillMetadata("# Just markdown", "/path/SKILL.md")).toThrow(
-      "frontmatter",
-    );
+    expect(() => parseSkillMetadata("# Just markdown", "/path/SKILL.md")).toThrow("frontmatter");
   });
 
   it("parses optional fields", () => {
@@ -180,13 +178,13 @@ describe("createSkillTool", () => {
       },
     };
     const tool = createSkillTool(skills);
-    const result = await tool.execute!({ skill_name: "my-skill" }, undefined as never);
+    const result = await tool.execute?.({ skill_name: "my-skill" }, undefined as never);
     expect((result as { path: string }).path).toBe("/path/to/my-skill/SKILL.md");
   });
 
   it("returns error for unknown skill", async () => {
     const tool = createSkillTool({});
-    const result = await tool.execute!({ skill_name: "nope" }, undefined as never);
+    const result = await tool.execute?.({ skill_name: "nope" }, undefined as never);
     expect((result as { error: string }).error).toContain("not found");
   });
 
@@ -194,7 +192,7 @@ describe("createSkillTool", () => {
     const onActivate = vi.fn();
     const skill = { name: "my-skill", description: "A skill", path: "/p/SKILL.md" };
     const tool = createSkillTool({ "my-skill": skill }, onActivate);
-    await tool.execute!({ skill_name: "my-skill" }, undefined as never);
+    await tool.execute?.({ skill_name: "my-skill" }, undefined as never);
     expect(onActivate).toHaveBeenCalledWith(skill);
   });
 });

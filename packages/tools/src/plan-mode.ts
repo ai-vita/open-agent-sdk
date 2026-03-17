@@ -54,7 +54,11 @@ export function createEnterPlanModeTool(
   return tool({
     description: ENTER_DESCRIPTION,
     inputSchema: zodSchema(enterSchema),
-    execute: async ({ reason }: { reason: string }): Promise<EnterPlanModeOutput | EnterPlanModeError> => {
+    execute: async ({
+      reason,
+    }: {
+      reason: string;
+    }): Promise<EnterPlanModeOutput | EnterPlanModeError> => {
       if (state.isActive) {
         return { error: "Already in planning mode. Use ExitPlanMode to exit." };
       }
@@ -83,7 +87,11 @@ export function createExitPlanModeTool(
   return tool({
     description: EXIT_DESCRIPTION,
     inputSchema: zodSchema(exitSchema),
-    execute: async ({ plan }: { plan: string }): Promise<ExitPlanModeOutput | ExitPlanModeError> => {
+    execute: async ({
+      plan,
+    }: {
+      plan: string;
+    }): Promise<ExitPlanModeOutput | ExitPlanModeError> => {
       let approved: boolean | undefined;
 
       if (onPlanSubmit) {
@@ -91,7 +99,9 @@ export function createExitPlanModeTool(
       }
 
       return {
-        message: approved ? "Plan approved, proceeding with execution" : "Plan submitted for review",
+        message: approved
+          ? "Plan approved, proceeding with execution"
+          : "Plan submitted for review",
         approved,
       };
     },

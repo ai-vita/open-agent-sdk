@@ -1,7 +1,7 @@
-import { tool, zodSchema } from "ai";
-import { z } from "zod";
 import type { Sandbox, ToolConfig } from "@open-agent-sdk/core";
 import { middleTruncate } from "@open-agent-sdk/core";
+import { tool, zodSchema } from "ai";
+import { z } from "zod";
 
 export interface BashOutput {
   stdout: string;
@@ -59,10 +59,7 @@ export function createBashTool(sandbox: Sandbox, config?: ToolConfig) {
     strict: config?.strict,
     needsApproval: config?.needsApproval,
     providerOptions: config?.providerOptions,
-    execute: async ({
-      command,
-      timeout,
-    }: BashInput): Promise<BashOutput | BashError> => {
+    execute: async ({ command, timeout }: BashInput): Promise<BashOutput | BashError> => {
       if (config?.blockedCommands) {
         for (const blocked of config.blockedCommands) {
           if (command.includes(blocked)) {

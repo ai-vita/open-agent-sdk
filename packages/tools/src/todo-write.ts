@@ -26,13 +26,15 @@ export interface TodoWriteError {
 }
 
 const todoWriteSchema = z.object({
-  todos: z.array(
-    z.object({
-      content: z.string().describe("The task description (imperative form)"),
-      status: z.enum(["pending", "in_progress", "completed"]).describe("Task status"),
-      activeForm: z.string().describe("Present continuous form of the task"),
-    }),
-  ).describe("The updated todo list"),
+  todos: z
+    .array(
+      z.object({
+        content: z.string().describe("The task description (imperative form)"),
+        status: z.enum(["pending", "in_progress", "completed"]).describe("Task status"),
+        activeForm: z.string().describe("Present continuous form of the task"),
+      }),
+    )
+    .describe("The updated todo list"),
 });
 
 type TodoWriteInput = z.infer<typeof todoWriteSchema>;
@@ -44,10 +46,7 @@ Mark tasks complete immediately after finishing.
 
 Task states: pending → in_progress → completed`;
 
-export function createTodoWriteTool(
-  state: TodoState,
-  onUpdate?: (todos: TodoItem[]) => void,
-) {
+export function createTodoWriteTool(state: TodoState, onUpdate?: (todos: TodoItem[]) => void) {
   return tool({
     description: TODO_WRITE_DESCRIPTION,
     inputSchema: zodSchema(todoWriteSchema),

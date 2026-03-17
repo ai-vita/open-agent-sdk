@@ -1,15 +1,18 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { SessionManager } from "./session-manager.js";
 import { existsSync, mkdirSync, rmSync } from "node:fs";
-import path from "node:path";
 import { tmpdir } from "node:os";
+import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { SessionManager } from "./session-manager.js";
 
 describe("SessionManager", () => {
   let testDir: string;
   let sessionPath: string;
 
   beforeEach(() => {
-    testDir = path.join(tmpdir(), `session-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    testDir = path.join(
+      tmpdir(),
+      `session-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
     mkdirSync(testDir, { recursive: true });
     sessionPath = path.join(testDir, "session.jsonl");
   });
@@ -64,7 +67,7 @@ describe("SessionManager", () => {
     expect(messages).toHaveLength(3);
     expect(messages[0]).toEqual({ role: "user", content: "msg1" });
     expect(messages[1]).toEqual({ role: "assistant", content: "msg2" });
-    expect((messages[2].content as string)).toContain("Branch point");
+    expect(messages[2].content as string).toContain("Branch point");
   });
 
   it("supports compaction entries", () => {

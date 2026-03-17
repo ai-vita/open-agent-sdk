@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { VercelSandbox } from "./index.js";
 
 // Mock the @vercel/sandbox module
@@ -94,7 +94,9 @@ describe("createVercelSandbox", () => {
       const sandbox = new VercelSandbox({ ensureTools: false });
       const content = await sandbox.readFile("/vercel/sandbox/test.txt");
       expect(content).toBe("file content");
-      expect(mockVercelInstance.readFileToBuffer).toHaveBeenCalledWith({ path: "/vercel/sandbox/test.txt" });
+      expect(mockVercelInstance.readFileToBuffer).toHaveBeenCalledWith({
+        path: "/vercel/sandbox/test.txt",
+      });
     });
 
     it("reads a file by relative path, prepending cwd", async () => {
@@ -117,19 +119,23 @@ describe("createVercelSandbox", () => {
     it("writes a file", async () => {
       const sandbox = new VercelSandbox({ ensureTools: false });
       await sandbox.writeFile("/vercel/sandbox/out.txt", "hello");
-      expect(mockVercelInstance.writeFiles).toHaveBeenCalledWith([{
-        path: "/vercel/sandbox/out.txt",
-        content: Buffer.from("hello"),
-      }]);
+      expect(mockVercelInstance.writeFiles).toHaveBeenCalledWith([
+        {
+          path: "/vercel/sandbox/out.txt",
+          content: Buffer.from("hello"),
+        },
+      ]);
     });
 
     it("writes a file by relative path", async () => {
       const sandbox = new VercelSandbox({ ensureTools: false });
       await sandbox.writeFile("out.txt", "world");
-      expect(mockVercelInstance.writeFiles).toHaveBeenCalledWith([{
-        path: "/vercel/sandbox/out.txt",
-        content: Buffer.from("world"),
-      }]);
+      expect(mockVercelInstance.writeFiles).toHaveBeenCalledWith([
+        {
+          path: "/vercel/sandbox/out.txt",
+          content: Buffer.from("world"),
+        },
+      ]);
     });
 
     it("readDir parses ls output into DirEntry list", async () => {

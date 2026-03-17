@@ -107,9 +107,7 @@ export class LRUCacheStore<T = unknown> implements CacheStore<T> {
 
 function defaultKeyGenerator(toolName: string, params: unknown): string {
   const sortedKeys =
-    params && typeof params === "object"
-      ? Object.keys(params as object).sort()
-      : undefined;
+    params && typeof params === "object" ? Object.keys(params as object).sort() : undefined;
   const serialized = JSON.stringify(params, sortedKeys);
   const hash = createHash("sha256").update(serialized).digest("hex").slice(0, 16);
   return `${toolName}:${hash}`;

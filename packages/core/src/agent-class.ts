@@ -1,15 +1,15 @@
 import type { LanguageModel, ModelMessage } from "ai";
-import type { ToolSet } from "./tool-types.js";
-import type { AgentEvent, DoneEvent } from "./agent-events.js";
 import type { StopWhen } from "./agent.js";
 import { runAgent } from "./agent.js";
-import type { SessionManager } from "./session/session-manager.js";
+import type { AgentEvent } from "./agent-events.js";
 import {
-  compactConversation,
-  contextNeedsCompaction,
   type CompactConversationConfig,
   type CompactConversationState,
+  compactConversation,
+  contextNeedsCompaction,
 } from "./compaction.js";
+import type { SessionManager } from "./session/session-manager.js";
+import type { ToolSet } from "./tool-types.js";
 
 export interface AgentCompactionConfig {
   /** Model's context limit */
@@ -144,7 +144,9 @@ export class Agent {
     if (!this.config.sessionManager) return;
 
     // Persist new messages (those after what we loaded from session)
-    const newMessages = this.messages.slice(inputMessages.length - (this.steeredMessages.length > 0 ? this.steeredMessages.length : 0));
+    const _newMessages = this.messages.slice(
+      inputMessages.length - (this.steeredMessages.length > 0 ? this.steeredMessages.length : 0),
+    );
     // Actually, persist the input and response messages that are new
     // The messages array from DoneEvent includes all messages (input + response)
     // We need to persist only what was added this turn
@@ -170,11 +172,7 @@ export class Agent {
       summarizerModel: this.config.compaction.summarizerModel ?? this.config.model,
     };
 
-    const result = await compactConversation(
-      this.messages,
-      compactionConfig,
-      this.compactionState,
-    );
+    const result = await compactConversation(this.messages, compactionConfig, this.compactionState);
 
     if (result.didCompact) {
       this.messages = result.messages;

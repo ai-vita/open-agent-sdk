@@ -1,0 +1,5 @@
+pre-commit:
+  jobs:
+    - name: biome check
+      run: pnpm biome check --staged --no-errors-on-unmatched
+      glob: "*.{js,ts,jsx,tsx,json,jsonc,css}"

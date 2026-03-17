@@ -1,6 +1,6 @@
+import type { Sandbox, ToolConfig } from "@open-agent-sdk/core";
 import { tool, zodSchema } from "ai";
 import { z } from "zod";
-import type { Sandbox, ToolConfig } from "@open-agent-sdk/core";
 
 export interface ReadTextOutput {
   type: "text";
@@ -28,11 +28,7 @@ const readInputSchema = z.object({
     .nullable()
     .default(null)
     .describe("Line number to start reading from (1-indexed)"),
-  limit: z
-    .number()
-    .nullable()
-    .default(null)
-    .describe("Maximum number of lines to read"),
+  limit: z.number().nullable().default(null).describe("Maximum number of lines to read"),
 });
 
 type ReadInput = z.infer<typeof readInputSchema>;
@@ -46,7 +42,20 @@ Usage:
 - Results include line numbers starting at 1
 - Cannot read binary files`;
 
-const BINARY_EXTENSIONS = ["pdf", "png", "jpg", "jpeg", "gif", "zip", "tar", "gz", "exe", "bin", "so", "dylib"];
+const BINARY_EXTENSIONS = [
+  "pdf",
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "zip",
+  "tar",
+  "gz",
+  "exe",
+  "bin",
+  "so",
+  "dylib",
+];
 
 export function createReadTool(sandbox: Sandbox, config?: ToolConfig) {
   const maxLines = config?.maxFileSize ?? 500;

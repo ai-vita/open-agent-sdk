@@ -1,5 +1,5 @@
+import type { DirEntry, ExecOptions, ExecResult, Sandbox } from "@open-agent-sdk/core";
 import { Sandbox as VercelSandboxImpl } from "@vercel/sandbox";
-import type { Sandbox, ExecOptions, ExecResult, DirEntry } from "@open-agent-sdk/core";
 
 export interface VercelSandboxConfig {
   runtime?: "node22" | "python3.13";
@@ -77,7 +77,11 @@ export class VercelSandbox implements Sandbox {
   private async ensureRipgrep(sbx: VercelSandboxImpl): Promise<string | undefined> {
     try {
       // Check if rg is already available
-      const check = await sbx.runCommand({ cmd: "which", args: ["rg"], cwd: this.workingDirectory });
+      const check = await sbx.runCommand({
+        cmd: "which",
+        args: ["rg"],
+        cwd: this.workingDirectory,
+      });
       const rgBin = (await check.stdout()).trim();
       if (rgBin) return rgBin;
 
@@ -146,7 +150,13 @@ export class VercelSandbox implements Sandbox {
       const durationMs = Math.round(performance.now() - startTime);
 
       if (interrupted) {
-        return { stdout: "", stderr: "Command timed out", exitCode: 124, durationMs, interrupted: true };
+        return {
+          stdout: "",
+          stderr: "Command timed out",
+          exitCode: 124,
+          durationMs,
+          interrupted: true,
+        };
       }
 
       return {
@@ -176,7 +186,11 @@ export class VercelSandbox implements Sandbox {
   async readDir(path: string): Promise<DirEntry[]> {
     const sbx = await this.getSbx();
     const fullPath = this.resolvePath(path);
-    const result = await sbx.runCommand({ cmd: "bash", args: ["-c", `ls -la "${fullPath}" 2>/dev/null | tail -n +2`], cwd: this.workingDirectory });
+    const result = await sbx.runCommand({
+      cmd: "bash",
+      args: ["-c", `ls -la "${fullPath}" 2>/dev/null | tail -n +2`],
+      cwd: this.workingDirectory,
+    });
     const stdout = await result.stdout();
     return stdout
       .split("\n")
@@ -187,13 +201,19 @@ export class VercelSandbox implements Sandbox {
         const isDirectory = line.startsWith("d");
         return { name, isDirectory };
       })
-      .filter((e: { name: string; isDirectory: boolean }) => e.name && e.name !== "." && e.name !== "..");
+      .filter(
+        (e: { name: string; isDirectory: boolean }) => e.name && e.name !== "." && e.name !== "..",
+      );
   }
 
   async fileExists(path: string): Promise<boolean> {
     const sbx = await this.getSbx();
     const fullPath = this.resolvePath(path);
-    const result = await sbx.runCommand({ cmd: "bash", args: ["-c", `test -e "${fullPath}" && echo "yes" || echo "no"`], cwd: this.workingDirectory });
+    const result = await sbx.runCommand({
+      cmd: "bash",
+      args: ["-c", `test -e "${fullPath}" && echo "yes" || echo "no"`],
+      cwd: this.workingDirectory,
+    });
     const out = await result.stdout();
     return out.trim() === "yes";
   }
@@ -201,7 +221,11 @@ export class VercelSandbox implements Sandbox {
   async isDirectory(path: string): Promise<boolean> {
     const sbx = await this.getSbx();
     const fullPath = this.resolvePath(path);
-    const result = await sbx.runCommand({ cmd: "bash", args: ["-c", `test -d "${fullPath}" && echo "yes" || echo "no"`], cwd: this.workingDirectory });
+    const result = await sbx.runCommand({
+      cmd: "bash",
+      args: ["-c", `test -d "${fullPath}" && echo "yes" || echo "no"`],
+      cwd: this.workingDirectory,
+    });
     const out = await result.stdout();
     return out.trim() === "yes";
   }

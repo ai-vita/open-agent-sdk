@@ -1,6 +1,6 @@
+import type { Sandbox, ToolConfig } from "@open-agent-sdk/core";
 import { tool, zodSchema } from "ai";
 import { z } from "zod";
-import type { Sandbox, ToolConfig } from "@open-agent-sdk/core";
 
 export interface WriteOutput {
   message: string;
@@ -43,12 +43,18 @@ export function createWriteTool(sandbox: Sandbox, config?: ToolConfig) {
       const byteLength = Buffer.byteLength(content, "utf-8");
 
       if (config?.maxFileSize && byteLength > config.maxFileSize) {
-        return { error: `Content exceeds maximum size of ${config.maxFileSize} bytes (got ${byteLength})` };
+        return {
+          error: `Content exceeds maximum size of ${config.maxFileSize} bytes (got ${byteLength})`,
+        };
       }
 
       try {
         await sandbox.writeFile(file_path, content);
-        return { message: `Successfully wrote to ${file_path}`, bytes_written: byteLength, file_path };
+        return {
+          message: `Successfully wrote to ${file_path}`,
+          bytes_written: byteLength,
+          file_path,
+        };
       } catch (error) {
         return { error: error instanceof Error ? error.message : "Unknown error" };
       }

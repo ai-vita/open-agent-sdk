@@ -12,19 +12,20 @@
  *   2. pnpm start
  */
 
-import 'dotenv/config';
-import dotenv from 'dotenv';
-dotenv.config({ path: '.env.local', override: true });
+import "dotenv/config";
+import dotenv from "dotenv";
 
-import { gateway } from "ai";
+dotenv.config({ path: ".env.local", override: true });
+
 import { runAgent, stepCountIs } from "@open-agent-sdk/core";
 import { LocalSandbox } from "@open-agent-sdk/sandbox-local";
-import { createAgentTools } from "@open-agent-sdk/tools";
 import { discoverSkills, skillsToXml } from "@open-agent-sdk/skills";
+import { createAgentTools } from "@open-agent-sdk/tools";
+import { gateway } from "ai";
 
 async function main() {
   // ── 1. Model ────────────────────────────────────────────────────────────────
-  const model = gateway('anthropic/claude-sonnet-4.6');
+  const model = gateway("anthropic/claude-sonnet-4.6");
 
   // ── 2. Sandbox ──────────────────────────────────────────────────────────────
   // Local sandbox: commands run on the host machine in a temp directory
@@ -44,7 +45,7 @@ async function main() {
   // ── 5. System prompt ────────────────────────────────────────────────────────
   const system = [
     "You are a skilled coding agent with access to the local filesystem and shell.",
-    "Work directory: " + cwd,
+    `Work directory: ${cwd}`,
     "Use the available tools to complete the task.",
     skillsXml,
   ]
@@ -52,7 +53,8 @@ async function main() {
     .join("\n\n");
 
   // ── 6. Run the agent ────────────────────────────────────────────────────────
-  const task = process.argv[2] ?? "List the files in the current directory and summarize what you see.";
+  const task =
+    process.argv[2] ?? "List the files in the current directory and summarize what you see.";
   console.log(`\nTask: ${task}\n${"─".repeat(60)}`);
 
   for await (const event of runAgent({
@@ -77,7 +79,9 @@ async function main() {
         console.error(`\n[error] ${event.error}`);
         break;
       case "done":
-        console.log(`\n${"─".repeat(60)}\nDone. Tokens: input=${event.usage.inputTokens} output=${event.usage.outputTokens}`);
+        console.log(
+          `\n${"─".repeat(60)}\nDone. Tokens: input=${event.usage.inputTokens} output=${event.usage.outputTokens}`,
+        );
         break;
     }
   }

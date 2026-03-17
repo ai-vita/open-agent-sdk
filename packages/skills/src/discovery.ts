@@ -10,9 +10,7 @@ const DEFAULT_SKILL_PATHS = [".skills", "~/.agent/skills"];
  * Discover skills from configured directories.
  * Only parses frontmatter for progressive disclosure (not full SKILL.md content).
  */
-export async function discoverSkills(
-  options?: DiscoverSkillsOptions,
-): Promise<SkillMetadata[]> {
+export async function discoverSkills(options?: DiscoverSkillsOptions): Promise<SkillMetadata[]> {
   const cwd = options?.cwd ?? process.cwd();
   const searchPaths = options?.paths ?? DEFAULT_SKILL_PATHS;
 

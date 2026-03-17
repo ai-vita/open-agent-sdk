@@ -1,6 +1,6 @@
 import { tool, zodSchema } from "ai";
-import { z } from "zod";
 import Parallel from "parallel-web";
+import { z } from "zod";
 
 export interface WebFetchOutput {
   response: string;

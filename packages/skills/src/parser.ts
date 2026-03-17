@@ -25,9 +25,7 @@ export function parseSkillMetadata(content: string, skillPath: string): SkillMet
     (parsed.name.length > 1 && !nameRegex.test(parsed.name)) ||
     parsed.name.includes("--")
   ) {
-    throw new Error(
-      `Invalid 'name' format in ${skillPath}: must be 1-64 lowercase chars/hyphens`,
-    );
+    throw new Error(`Invalid 'name' format in ${skillPath}: must be 1-64 lowercase chars/hyphens`);
   }
 
   let allowedTools: string[] | undefined;

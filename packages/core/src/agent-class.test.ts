@@ -1,7 +1,7 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import type { ModelMessage } from "ai";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Agent } from "./agent-class.js";
 import type { AgentEvent, DoneEvent } from "./agent-events.js";
-import type { ModelMessage } from "ai";
 
 // Mock runAgent to avoid needing a real model
 vi.mock("./agent.js", () => ({
@@ -28,7 +28,11 @@ vi.mock("./agent.js", () => ({
         inputTokens: 10,
         outputTokens: 5,
         totalTokens: 15,
-        inputTokenDetails: { noCacheTokens: undefined, cacheReadTokens: undefined, cacheWriteTokens: undefined },
+        inputTokenDetails: {
+          noCacheTokens: undefined,
+          cacheReadTokens: undefined,
+          cacheWriteTokens: undefined,
+        },
         outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
       },
     } satisfies DoneEvent;

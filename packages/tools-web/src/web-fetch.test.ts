@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { webFetch } from "./web-fetch.js";
 
 const mockExtract = vi.fn();
@@ -15,8 +15,7 @@ const API_KEY = "test-key";
 const URL = "https://example.com";
 const PROMPT = "Summarize the main points";
 
-const execute = (input: { url: string; prompt: string }) =>
-  webFetch(API_KEY, input);
+const execute = (input: { url: string; prompt: string }) => webFetch(API_KEY, input);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -31,7 +30,7 @@ describe("webFetchExecute", () => {
     await execute({ url: URL, prompt: PROMPT });
 
     expect(mockExtract).toHaveBeenCalledWith(
-      expect.objectContaining({ objective: PROMPT, urls: [URL] })
+      expect.objectContaining({ objective: PROMPT, urls: [URL] }),
     );
   });
 

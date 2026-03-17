@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { E2BSandbox } from "./index.js";
 
 // Mock the @e2b/code-interpreter module
@@ -71,10 +71,7 @@ describe("createE2BSandbox", () => {
     it("writes a file", async () => {
       const sandbox = new E2BSandbox();
       await sandbox.writeFile("/home/user/out.txt", "hello");
-      expect(mockE2BInstance.files.write).toHaveBeenCalledWith(
-        "/home/user/out.txt",
-        "hello",
-      );
+      expect(mockE2BInstance.files.write).toHaveBeenCalledWith("/home/user/out.txt", "hello");
     });
 
     it("lists directory entries", async () => {
