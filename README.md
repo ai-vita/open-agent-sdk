@@ -26,6 +26,7 @@ open-agent-sdk/
 │   ├── sandbox-local/      # Local filesystem + shell sandbox
 │   ├── sandbox-e2b/        # E2B cloud sandbox
 │   ├── sandbox-vercel/     # Vercel Firecracker sandbox
+│   ├── cli/                # `oa` — standalone CLI coding agent
 │   ├── tools/              # Standard agent tools (Bash, Read, Write, Edit, Glob, Grep, …)
 │   ├── tools-web/          # Web tools (WebSearch, WebFetch) via parallel-web
 │   └── skills/             # Agent Skills standard (discovery, parsing, XML injection)
@@ -41,7 +42,27 @@ pnpm build
 pnpm test
 ```
 
-### Run the interactive chatbot
+### `oa` — Standalone CLI Agent
+
+A terminal coding agent you can install globally and run from any directory. Session persistence, auto-compaction, streaming, skill discovery — all built in.
+
+```bash
+# Run directly from source (dev):
+AI_GATEWAY_API_KEY=... pnpm --filter @open-agent-sdk/cli start
+
+# Or build and install globally:
+pnpm --filter @open-agent-sdk/cli build
+npm i -g @open-agent-sdk/cli
+oa                # start or resume a session
+oa --new          # fresh session
+oa --model openai/gpt-4o   # use a different model
+
+# Or compile a standalone binary (requires bun):
+pnpm --filter @open-agent-sdk/cli compile
+./packages/cli/dist/oa     # no runtime needed
+```
+
+### Run the example coding agent
 
 A full-featured terminal chatbot with session persistence, auto-compaction, and streaming — in ~100 lines of code.
 
@@ -180,6 +201,19 @@ import { createWebSearchTool, createWebFetchTool } from "@open-agent-sdk/tools-w
 const webSearch = createWebSearchTool();
 const webFetch = createWebFetchTool();
 ```
+
+### `@open-agent-sdk/cli`
+
+Standalone CLI coding agent — `oa`. Install globally or compile to a standalone binary.
+
+```bash
+npm i -g @open-agent-sdk/cli
+oa              # interactive agent in current directory
+oa --new        # fresh session
+oa --help       # show all options
+```
+
+Features: session persistence (`.session.jsonl`), auto-compaction, skill discovery, configurable model via `--model`.
 
 ### `@open-agent-sdk/skills`
 
