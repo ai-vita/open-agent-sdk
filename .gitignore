@@ -2,3 +2,4 @@ node_modules
 dist
 *.tsbuildinfo
 CLAUDE.local.md
+.DS_Store
