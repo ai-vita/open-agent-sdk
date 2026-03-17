@@ -57,8 +57,12 @@ async function scanDirectory(dirPath: string): Promise<SkillMetadata[]> {
           );
         }
         skills.push(metadata);
-      } catch {}
+      } catch {
+        // Skip skills with missing/unreadable SKILL.md
+      }
     }
-  } catch {}
+  } catch {
+    // Directory doesn't exist or isn't readable
+  }
   return skills;
 }

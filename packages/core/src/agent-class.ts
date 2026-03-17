@@ -143,16 +143,8 @@ export class Agent {
   private async persistToSession(inputMessages: ModelMessage[]): Promise<void> {
     if (!this.config.sessionManager) return;
 
-    // Persist new messages (those after what we loaded from session)
-    const _newMessages = this.messages.slice(
-      inputMessages.length - (this.steeredMessages.length > 0 ? this.steeredMessages.length : 0),
-    );
-    // Actually, persist the input and response messages that are new
-    // The messages array from DoneEvent includes all messages (input + response)
-    // We need to persist only what was added this turn
-    const previousLength = inputMessages.length;
-    for (let i = previousLength; i < this.messages.length; i++) {
-      this.config.sessionManager.append(this.messages[i]);
+    for (const msg of this.messages.slice(inputMessages.length)) {
+      this.config.sessionManager.append(msg);
     }
   }
 
