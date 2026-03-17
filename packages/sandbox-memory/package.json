@@ -1,7 +1,7 @@
 {
-  "name": "@open-agent-sdk/core",
+  "name": "@open-agent-sdk/sandbox-memory",
   "version": "0.1.0",
-  "description": "Core interfaces, types, agent loop, caching, and utilities for open-agent-sdk",
+  "description": "In-memory sandbox implementation for testing open-agent-sdk tools",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -21,21 +21,12 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
-  "peerDependencies": {
-    "ai": ">=6.0.0",
-    "proper-lockfile": ">=4.0.0",
-    "zod": ">=3.0.0"
-  },
-  "peerDependenciesMeta": {
-    "proper-lockfile": {
-      "optional": true
-    }
+  "dependencies": {
+    "@open-agent-sdk/core": "workspace:*"
   },
   "devDependencies": {
-    "ai": "^6.0.0",
     "typescript": "^5.0.0",
     "tsup": "^8.0.0",
-    "vitest": "^3.0.0",
-    "zod": "^3.0.0"
+    "vitest": "^3.0.0"
   }
 }

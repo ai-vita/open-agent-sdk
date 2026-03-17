@@ -20,6 +20,10 @@ export type {
 export { runAgent, stepCountIs, budgetExceeded, composeStops } from "./agent.js";
 export type { AgentOptions, StopWhen } from "./agent.js";
 
+// Agent class
+export { Agent } from "./agent-class.js";
+export type { AgentConfig, AgentCompactionConfig } from "./agent-class.js";
+
 // Context compaction
 export {
   compactConversation,
@@ -27,16 +31,32 @@ export {
   estimateTokens,
   estimateMessageTokens,
   estimateMessagesTokens,
+  findCutPoint,
+  extractFileOperations,
+  serializeMessages,
 } from "./compaction.js";
 export type {
   CompactConversationConfig,
   CompactConversationState,
   CompactConversationResult,
+  FileOperations,
 } from "./compaction.js";
 
 // Caching
 export { cached, LRUCacheStore } from "./cache.js";
 export type { CacheStore, CacheEntry, CacheOptions, CacheStats, CachedTool } from "./cache.js";
+
+// Workspace path safety
+export { resolveWorkspacePath } from "./workspace-path.js";
+
+// Session persistence
+export { SessionManager } from "./session/session-manager.js";
+export type {
+  SessionEntry,
+  MessageEntry,
+  CompactionEntry,
+  BranchSummaryEntry,
+} from "./session/types.js";
 
 // Utilities
 export { middleTruncate, isToolCallPart, isToolResultPart, sleep, clamp } from "./utils.js";

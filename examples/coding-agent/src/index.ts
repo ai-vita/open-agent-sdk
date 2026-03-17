@@ -87,3 +87,40 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+
+/**
+ * Alternative: Using the Agent class for stateful multi-turn conversations.
+ *
+ * The Agent class wraps runAgent() with managed conversation state,
+ * optional session persistence, auto-compaction, and message steering.
+ *
+ * ```typescript
+ * import { Agent } from "@open-agent-sdk/core";
+ *
+ * const agent = new Agent({
+ *   model,
+ *   tools,
+ *   system,
+ *   maxSteps: 10,
+ *   // Optional: auto-compact when context gets large
+ *   compaction: {
+ *     maxTokens: 200_000,
+ *     keepRecentTokens: 20_000,
+ *     reserveTokens: 16_384,
+ *   },
+ * });
+ *
+ * // Multi-turn: state is managed automatically
+ * const events1 = await agent.generate("List the files in the current directory.");
+ * const events2 = await agent.generate("Now summarize the README.");
+ *
+ * // Steering: inject guidance before the next call
+ * agent.steer({ role: "user", content: "Focus on error handling" });
+ * const events3 = await agent.generate("Review the main module.");
+ *
+ * // Streaming alternative
+ * for await (const event of agent.stream("Explain the architecture.")) {
+ *   if (event.type === "text-delta") process.stdout.write(event.delta);
+ * }
+ * ```
+ */
