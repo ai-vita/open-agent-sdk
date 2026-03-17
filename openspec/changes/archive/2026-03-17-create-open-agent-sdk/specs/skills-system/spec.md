@@ -8,7 +8,7 @@ The skills package SHALL export a `discoverSkills(options?)` function that scans
 - **THEN** the result SHALL include a metadata entry for `pdf-processing` with its description and path
 
 #### Scenario: Discover from multiple directories
-- **WHEN** `discoverSkills({ paths: [".skills", "~/.agent/skills"] })` is called
+- **WHEN** `discoverSkills({ paths: [".skills", "~/.agents/skills"] })` is called
 - **THEN** skills from both directories SHALL be discovered, with project-level skills taking priority
 
 #### Scenario: No skills found

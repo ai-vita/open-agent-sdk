@@ -31,7 +31,7 @@ export interface SkillBundle {
  * Options for discoverSkills().
  */
 export interface DiscoverSkillsOptions {
-  /** Override default discovery paths. Default: [".skills", "~/.agent/skills"] */
+  /** Override default discovery paths. Default: [".skills", "~/.agents/skills"] */
   paths?: string[];
   /** Working directory for resolving relative paths. Default: process.cwd() */
   cwd?: string;

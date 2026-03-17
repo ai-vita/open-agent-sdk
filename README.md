@@ -188,7 +188,7 @@ const webFetch = createWebFetchTool();
 ```typescript
 import { discoverSkills, skillsToXml, setupAgentEnvironment } from "@open-agent-sdk/skills";
 
-// Discover skills from .skills/ and ~/.agent/skills/
+// Discover skills from .skills/ and ~/.agents/skills/
 const skills = await discoverSkills();
 
 // Inject into system prompt as XML

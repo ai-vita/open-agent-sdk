@@ -30,7 +30,7 @@ pnpm --filter @open-agent-sdk/example-coding-agent chatbot  # interactive chatbo
 - **packages/core** — Agent loop (`runAgent()`, `Agent` class), `Sandbox` interface, tool types, caching (`cached()`, `LRUCacheStore`), compaction, session persistence, workspace path safety
 - **packages/tools** — Standard tool factories: `createBashTool`, `createReadTool`, `createWriteTool`, `createEditTool`, `createGlobTool`, `createGrepTool`, `createAskUserTool`, `createTodoWriteTool`, `createTaskTool`, `createEnterPlanModeTool`, `createExitPlanModeTool`. `createAgentTools()` is the convenience factory for all of them.
 - **packages/tools-web** — `WebSearch` and `WebFetch` tools (via parallel-web)
-- **packages/skills** — Skill discovery from `.skills/` and `~/.agent/skills/`, SKILL.md parsing, XML injection for system prompts
+- **packages/skills** — Skill discovery from `.skills/` and `~/.agents/skills/`, SKILL.md parsing, XML injection for system prompts
 - **packages/sandbox-local** — `LocalSandbox` (real filesystem + child_process shell)
 - **packages/sandbox-e2b** — `E2BSandbox` (cloud sandbox, peer dep: @e2b/code-interpreter)
 - **packages/sandbox-vercel** — `VercelSandbox` (Firecracker, peer dep: @vercel/sandbox)

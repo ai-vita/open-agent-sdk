@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import { parseSkillMetadata } from "./parser.js";
 import type { DiscoverSkillsOptions, SkillMetadata } from "./types.js";
 
-const DEFAULT_SKILL_PATHS = [".skills", "~/.agent/skills"];
+const DEFAULT_SKILL_PATHS = [".skills", "~/.agents/skills"];
 
 /**
  * Discover skills from configured directories.

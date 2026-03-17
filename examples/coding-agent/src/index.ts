@@ -38,7 +38,7 @@ async function main() {
   });
 
   // ── 4. Skills ───────────────────────────────────────────────────────────────
-  // Discover SKILL.md files from default paths: .skills/ and ~/.agent/skills/ (if any)
+  // Discover SKILL.md files from default paths: .skills/ and ~/.agents/skills/ (if any)
   const skills = await discoverSkills();
   const skillsXml = skills.length > 0 ? skillsToXml(skills) : "";
 
