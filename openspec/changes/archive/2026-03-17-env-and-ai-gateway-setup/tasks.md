@@ -23,4 +23,4 @@
 ## 5. Verification
 
 - [x] 5.1 Run `pnpm typecheck` in `examples/coding-agent` and confirm no TypeScript errors
-- [ ] 5.2 Run the agent with a simple task (e.g., `pnpm start "List files in current directory"`) and confirm it completes successfully via the gateway
+- [x] 5.2 Run the agent with a simple task (e.g., `pnpm start "List files in current directory"`) and confirm it completes successfully via the gateway
