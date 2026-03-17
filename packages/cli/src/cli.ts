@@ -18,6 +18,7 @@ import { parseArgs } from "node:util";
 
 import { Agent, SessionManager } from "@open-agent-sdk/core";
 import { LocalSandbox } from "@open-agent-sdk/sandbox-local";
+import { createSkillTool, discoverSkills, skillsToXml } from "@open-agent-sdk/skills";
 import { createAgentTools } from "@open-agent-sdk/tools";
 import { gateway } from "ai";
 import dotenv from "dotenv";
@@ -97,11 +98,19 @@ async function main() {
   const sessionManager = new SessionManager(sessionPath);
   const resumed = sessionManager.getMessages().length > 0;
 
-  const model = gateway(flags.model!);
+  const model = gateway(flags.model);
   const sandbox = new LocalSandbox({ cwd });
   const { tools } = createAgentTools(sandbox, {
     tools: { Bash: { timeout: 30_000 } },
   });
+
+  const skills = await discoverSkills({ cwd });
+  if (skills.length > 0) {
+    const skillsByName = Object.fromEntries(skills.map((s) => [s.name, s]));
+    tools.Skill = createSkillTool(skillsByName);
+  }
+
+  const skillsXml = skills.length > 0 ? skillsToXml(skills) : "";
 
   const agent = new Agent({
     model,
@@ -110,7 +119,10 @@ async function main() {
       "You are a skilled coding agent with access to the local filesystem and shell.",
       `Work directory: ${cwd}`,
       "Use the available tools to complete the task.",
-    ].join("\n\n"),
+      skillsXml,
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
     maxSteps: 10,
     sessionManager,
     compaction: {
@@ -124,6 +136,9 @@ async function main() {
 
   if (resumed) {
     console.log(`Resumed session (${sessionManager.getMessages().length} messages).`);
+  }
+  if (skills.length > 0) {
+    console.log(`Skills: ${skills.map((s) => s.name).join(", ")}`);
   }
   console.log('Type your message, or "/exit" to quit.\n');
 
