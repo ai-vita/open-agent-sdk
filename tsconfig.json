@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/tools" },
+    { "path": "packages/tools-web" },
+    { "path": "packages/skills" },
+    { "path": "packages/sandbox-local" },
+    { "path": "packages/sandbox-e2b" },
+    { "path": "packages/sandbox-vercel" },
+    { "path": "packages/sandbox-memory" }
+  ]
+}
