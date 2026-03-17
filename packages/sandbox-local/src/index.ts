@@ -61,6 +61,10 @@ export class LocalSandbox implements Sandbox {
         timeoutId = setTimeout(() => {
           interrupted = true;
           proc.kill("SIGKILL");
+          // Destroy stdio streams so `close` fires immediately even if
+          // grandchild processes inherited the pipe file descriptors.
+          proc.stdout.destroy();
+          proc.stderr.destroy();
         }, options.timeout);
       }
 
