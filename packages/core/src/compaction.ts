@@ -185,11 +185,7 @@ export function serializeMessages(messages: ModelMessage[]): string {
               thinkingParts.push(block.text);
               break;
             case "tool-call": {
-              const input = (block.input || {}) as Record<string, unknown>;
-              const argsStr = Object.entries(input)
-                .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
-                .join(", ");
-              toolCalls.push(`${block.toolName}(${argsStr})`);
+              toolCalls.push(`${block.toolName}(${JSON.stringify(block.input)})`);
               break;
             }
           }

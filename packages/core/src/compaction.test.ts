@@ -159,7 +159,7 @@ describe("serializeMessages", () => {
     ];
     const result = serializeMessages(messages);
     expect(result).toContain("[Assistant tool calls]:");
-    expect(result).toContain('read(path="/x.ts")');
+    expect(result).toContain('read({"path":"/x.ts"})');
   });
 
   it("serializes tool results", () => {
