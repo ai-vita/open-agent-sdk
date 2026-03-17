@@ -1,7 +1,9 @@
 # env-loading Specification
 
 ## Purpose
-TBD - created by archiving change env-and-ai-gateway-setup. Update Purpose after archive.
+
+Load .env and .env.local files at agent startup to supply API keys and local configuration without requiring shell-level environment variable exports.
+
 ## Requirements
 ### Requirement: Load environment variables from local dotenv files
 The coding agent example SHALL load environment variables from `.env` and `.env.local` files at process startup, before any SDK or provider initialization occurs. `.env.local` values SHALL override `.env` values for the same key.

@@ -1,7 +1,9 @@
 # pnpm-workspace Specification
 
 ## Purpose
-TBD - created by archiving change init-pnpm-workspace. Update Purpose after archive.
+
+Establish the pnpm workspace foundation with root package.json, pnpm-workspace.yaml, and directory conventions for organizing the monorepo into packages.
+
 ## Requirements
 ### Requirement: Root package.json exists
 The project SHALL have a root `package.json` with `"private": true` and a `name` field set to `"open-agent-sdk"`. It SHALL include a `packageManager` field specifying pnpm v10+.

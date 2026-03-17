@@ -1,7 +1,9 @@
 # e2b-sandbox-module Specification
 
 ## Purpose
-TBD - created by archiving change simplify-sandbox-static-imports. Update Purpose after archive.
+
+Declare the E2B SDK as a regular dependency and use static imports instead of dynamic await import(), eliminating unnecessary complexity and improving type safety.
+
 ## Requirements
 ### Requirement: E2B SDK as regular dependency
 `@open-agent-sdk/sandbox-e2b` SHALL declare `@e2b/code-interpreter` as a regular `dependency`, not a peer dependency.

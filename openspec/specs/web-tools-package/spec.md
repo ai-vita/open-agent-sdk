@@ -1,7 +1,9 @@
 # web-tools-package Specification
 
 ## Purpose
-TBD - created by archiving change extract-web-tools-package. Update Purpose after archive.
+
+Provide WebFetch and WebSearch tools in a standalone package with parallel-web as a bundled dependency, removing optional peer dependency friction from the main tools package.
+
 ## Requirements
 ### Requirement: tools-web package exists as standalone workspace package
 A new package `@open-agent-sdk/tools-web` SHALL exist at `packages/tools-web/` in the monorepo workspace with its own `package.json`, build config, and source files.

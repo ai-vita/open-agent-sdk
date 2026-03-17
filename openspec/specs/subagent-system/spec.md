@@ -1,7 +1,9 @@
 # subagent-system Specification
 
 ## Purpose
-TBD - created by archiving change create-open-agent-sdk. Update Purpose after archive.
+
+Enable sub-agent spawning via the Task tool with context isolation, tool restriction, and streaming to the UI for parallelized or specialized work.
+
 ## Requirements
 ### Requirement: Sub-agents run with isolated context
 The sub-agent system SHALL allow spawning a new agent loop with its own message history, isolated from the parent agent's conversation context.

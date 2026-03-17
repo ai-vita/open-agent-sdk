@@ -1,7 +1,9 @@
 # session-persistence Specification
 
 ## Purpose
-TBD - created by archiving change adopt-edge-pi-patterns. Update Purpose after archive.
+
+Provide a JSONL tree-based session manager that persists conversation messages with branching support, enabling conversation continuity across restarts.
+
 ## Requirements
 ### Requirement: SessionManager stores messages as JSONL entries
 The `SessionManager` SHALL persist conversation messages as newline-delimited JSON entries in a single file, where each entry contains a unique `id`, an optional `parentId`, a `type`, and a `timestamp`.

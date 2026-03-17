@@ -1,7 +1,9 @@
 # workspace-path-safety Specification
 
 ## Purpose
-TBD - created by archiving change adopt-edge-pi-patterns. Update Purpose after archive.
+
+Provide a centralized path resolver that validates all tool file operations stay within the sandbox working directory, preventing path traversal attacks.
+
 ## Requirements
 ### Requirement: resolveWorkspacePath normalizes and validates paths
 The `resolveWorkspacePath(rootDir, requestedPath)` function SHALL return an absolute, normalized path that is guaranteed to be within `rootDir`. It SHALL throw if the resolved path escapes the root.

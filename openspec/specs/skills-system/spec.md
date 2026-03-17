@@ -1,7 +1,9 @@
 # skills-system Specification
 
 ## Purpose
-TBD - created by archiving change create-open-agent-sdk. Update Purpose after archive.
+
+Support the Agent Skills standard with filesystem discovery, SKILL.md parsing, remote fetching from GitHub, and XML formatting for system prompt injection.
+
 ## Requirements
 ### Requirement: Discover skills from filesystem
 The skills package SHALL export a `discoverSkills(options?)` function that scans directories for `SKILL.md` files and returns an array of `SkillMetadata` objects (name, description, path).

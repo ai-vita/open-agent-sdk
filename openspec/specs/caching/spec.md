@@ -1,7 +1,9 @@
 # caching Specification
 
 ## Purpose
-TBD - created by archiving change create-open-agent-sdk. Update Purpose after archive.
+
+Provide tool result caching with pluggable stores (LRU, Redis) and per-tool configuration to reduce redundant computation.
+
 ## Requirements
 ### Requirement: Pluggable cache store interface
 The core package SHALL define a `CacheStore` interface with `get`, `set`, `delete`, `clear`, and optional `size` methods, supporting both synchronous and asynchronous implementations.

@@ -1,7 +1,9 @@
 # compaction-improvements Specification
 
 ## Purpose
-TBD - created by archiving change adopt-edge-pi-patterns. Update Purpose after archive.
+
+Improve conversation compaction with token-based split points, structured summarization prompts, file operations tracking, and split-turn awareness.
+
 ## Requirements
 ### Requirement: Token-based split point replaces message-count split
 The `compactConversation` function SHALL use a `keepRecentTokens` option (default: 20000) that determines how many tokens of recent conversation to preserve. It SHALL walk backwards from the newest message, accumulating estimated tokens, and find a valid cut point at a user or assistant message boundary. The previous `protectRecentMessages` option SHALL be removed.

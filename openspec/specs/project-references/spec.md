@@ -1,7 +1,9 @@
 # project-references Specification
 
 ## Purpose
-TBD - created by archiving change source-first-exports. Update Purpose after archive.
+
+Enable TypeScript project references across packages for correct cross-package source resolution and Go to Definition in the IDE.
+
 ## Requirements
 ### Requirement: Packages use composite TypeScript configuration
 Each package's `tsconfig.json` SHALL set `composite: true` to enable TypeScript project references.

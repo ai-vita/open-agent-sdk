@@ -1,7 +1,9 @@
 # sandbox-interface Specification
 
 ## Purpose
-TBD - created by archiving change create-open-agent-sdk. Update Purpose after archive.
+
+Define the abstract sandbox contract for command execution and filesystem operations, allowing different execution environments to be swapped in as separate packages.
+
 ## Requirements
 ### Requirement: Sandbox interface defines command execution
 The `Sandbox` interface SHALL expose an `exec(command, options?)` method that executes a shell command and returns an `ExecResult` containing `stdout`, `stderr`, and `exitCode`.

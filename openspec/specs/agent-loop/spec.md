@@ -1,7 +1,9 @@
 # agent-loop Specification
 
 ## Purpose
-TBD - created by archiving change create-open-agent-sdk. Update Purpose after archive.
+
+Provide the core agent conversation loop handling message management, step execution, stop conditions, context compaction, and budget tracking.
+
 ## Requirements
 ### Requirement: Agent loop executes multi-step tool-calling conversations
 The core package SHALL provide a `runAgent()` function that accepts an `AgentOptions` object (including model, tools, system prompt, and initial messages) and returns an `AsyncGenerator<AgentEvent>` that yields events as the agent reasons and acts.

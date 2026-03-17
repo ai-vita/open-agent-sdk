@@ -1,7 +1,9 @@
 # sandbox-local Specification
 
 ## Purpose
-TBD - created by archiving change create-open-agent-sdk. Update Purpose after archive.
+
+Provide a sandbox implementation that executes commands and file operations on the local machine using native process spawning.
+
 ## Requirements
 ### Requirement: Local sandbox executes commands via native process spawning
 The `@open-agent-sdk/sandbox-local` package SHALL provide a `createLocalSandbox(options?)` factory that returns a `Sandbox` implementation executing commands on the local machine.

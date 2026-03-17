@@ -1,7 +1,9 @@
 # source-exports Specification
 
 ## Purpose
-TBD - created by archiving change source-first-exports. Update Purpose after archive.
+
+Point package exports at TypeScript source files for development so IDEs resolve source directly, with publishConfig overrides to ship compiled output to npm consumers.
+
 ## Requirements
 ### Requirement: Package exports resolve to TypeScript source in development
 Each package's `exports` field in `package.json` SHALL point to `./src/index.ts` so that TypeScript and IDE tooling resolve source files directly without requiring a build step.

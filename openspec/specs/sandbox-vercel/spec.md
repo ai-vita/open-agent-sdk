@@ -1,7 +1,9 @@
 # sandbox-vercel Specification
 
 ## Purpose
-TBD - created by archiving change create-open-agent-sdk. Update Purpose after archive.
+
+Provide a sandbox implementation that executes commands and file operations in Vercel Firecracker microVM sandboxes.
+
 ## Requirements
 ### Requirement: Vercel sandbox executes commands in Firecracker microVMs
 The `@open-agent-sdk/sandbox-vercel` package SHALL provide a `createVercelSandbox(options?)` factory that returns a `Sandbox` implementation backed by Vercel's Firecracker microVM infrastructure via `@vercel/sandbox`.

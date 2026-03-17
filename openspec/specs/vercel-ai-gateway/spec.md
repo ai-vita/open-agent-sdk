@@ -1,7 +1,9 @@
 # vercel-ai-gateway Specification
 
 ## Purpose
-TBD - created by archiving change env-and-ai-gateway-setup. Update Purpose after archive.
+
+Route all model calls through Vercel's AI Gateway instead of calling the Anthropic API directly, providing a unified proxy layer with observability and multi-provider support.
+
 ## Requirements
 ### Requirement: Route all model calls through Vercel AI Gateway
 The coding agent example SHALL use Vercel's AI Gateway as the model provider instead of calling the Anthropic API directly. The gateway SHALL be configured via an `AI_GATEWAY_API_KEY` environment variable loaded from `.env.local`.

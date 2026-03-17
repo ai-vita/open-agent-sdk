@@ -1,7 +1,9 @@
 # sandbox-e2b Specification
 
 ## Purpose
-TBD - created by archiving change create-open-agent-sdk. Update Purpose after archive.
+
+Provide a sandbox implementation that executes commands and file operations in E2B cloud sandboxes for isolated, secure execution.
+
 ## Requirements
 ### Requirement: E2B sandbox executes commands in cloud environments
 The `@open-agent-sdk/sandbox-e2b` package SHALL provide a `createE2BSandbox(options)` factory that returns a `Sandbox` implementation backed by E2B's code interpreter API.

@@ -1,7 +1,9 @@
 # agent-class Specification
 
 ## Purpose
-TBD - created by archiving change adopt-edge-pi-patterns. Update Purpose after archive.
+
+Provide a stateful Agent class wrapping runAgent() with session persistence, auto-compaction, and message steering, while keeping runAgent() as the low-level primitive.
+
 ## Requirements
 ### Requirement: Agent class wraps runAgent with stateful orchestration
 The `Agent` class SHALL accept the same options as `runAgent()` plus optional `sessionManager` and `compaction` configuration. It SHALL provide `generate()` and `stream()` methods that delegate to `runAgent()`.

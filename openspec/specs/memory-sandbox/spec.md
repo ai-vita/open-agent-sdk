@@ -1,7 +1,9 @@
 # memory-sandbox Specification
 
 ## Purpose
-TBD - created by archiving change adopt-edge-pi-patterns. Update Purpose after archive.
+
+Provide an in-memory sandbox implementation for testing tools without filesystem side effects, enabling fast and deterministic test execution.
+
 ## Requirements
 ### Requirement: MemorySandbox implements Sandbox interface
 The `MemorySandbox` class SHALL implement the full `Sandbox` interface using an in-memory filesystem and a simulated shell executor, with no real filesystem or process side effects.

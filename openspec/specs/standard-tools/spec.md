@@ -1,7 +1,9 @@
 # standard-tools Specification
 
 ## Purpose
-TBD - created by archiving change create-open-agent-sdk. Update Purpose after archive.
+
+Provide standard coding tools (Bash, Read, Write, Edit, Glob, Grep) and workflow tools (AskUser, PlanMode, TodoWrite) built on the sandbox interface.
+
 ## Requirements
 ### Requirement: Bash tool executes shell commands
 The Bash tool SHALL execute a given command string in the sandbox's shell and return stdout, stderr, and exit code.

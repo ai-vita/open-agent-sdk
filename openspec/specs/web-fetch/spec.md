@@ -1,7 +1,9 @@
 # web-fetch Specification
 
 ## Purpose
-TBD - created by archiving change pass-prompt-to-extract-objective. Update Purpose after archive.
+
+Extract focused web content by passing the user prompt as the objective parameter to parallel-web, eliminating a redundant second-pass AI generation call.
+
 ## Requirements
 ### Requirement: Prompt forwarded as extraction objective
 The tool SHALL pass the user-supplied `prompt` as the `objective` parameter in the `parallel-web` extract call, so that extracted content is focused on the user's intent without a secondary AI generation step.

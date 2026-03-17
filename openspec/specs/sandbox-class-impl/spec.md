@@ -1,7 +1,9 @@
 # sandbox-class-impl Specification
 
 ## Purpose
-TBD - created by archiving change refactor-sandbox-to-classes. Update Purpose after archive.
+
+Refactor sandbox implementations from factory functions to classes, providing clearer encapsulation, shared path-resolution logic, and better extensibility.
+
 ## Requirements
 ### Requirement: Each sandbox package exports a class that implements Sandbox
 Each sandbox package (`sandbox-local`, `sandbox-e2b`, `sandbox-vercel`) SHALL export a named class (`LocalSandbox`, `E2BSandbox`, `VercelSandboxImpl` or `VercelSandbox`) that explicitly implements the `Sandbox` interface from `@open-agent-sdk/core`.

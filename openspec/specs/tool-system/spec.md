@@ -1,7 +1,9 @@
 # tool-system Specification
 
 ## Purpose
-TBD - created by archiving change create-open-agent-sdk. Update Purpose after archive.
+
+Define the tool interface, registration, execution pipeline, and result handling that allows agents to invoke structured operations.
+
 ## Requirements
 ### Requirement: Tools are factory functions
 Each tool SHALL be created via a factory function that accepts a `Sandbox` instance and an optional configuration object, and returns a Vercel AI SDK-compatible `Tool` object.
