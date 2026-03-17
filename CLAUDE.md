@@ -22,7 +22,7 @@ Run the example coding agent:
 cp examples/coding-agent/.env examples/coding-agent/.env.local
 # set AI_GATEWAY_API_KEY in .env.local
 pnpm --filter @open-agent-sdk/example-coding-agent start "Your task"
-pnpm --filter @open-agent-sdk/example-coding-agent multi-turn  # multi-turn mode
+pnpm --filter @open-agent-sdk/example-coding-agent chatbot  # interactive chatbot
 ```
 
 ## Monorepo Layout

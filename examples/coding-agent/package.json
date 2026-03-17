@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
-    "multi-turn": "tsx src/multi-turn.ts",
+    "chatbot": "tsx src/chatbot.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

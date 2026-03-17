@@ -41,13 +41,21 @@ pnpm build
 pnpm test
 ```
 
-### Run the example agent
+### Run the interactive chatbot
+
+A full-featured terminal chatbot with session persistence, auto-compaction, and streaming — in ~100 lines of code.
 
 ```bash
 # Copy .env and set AI_GATEWAY_API_KEY to your Vercel AI Gateway token
 cp examples/coding-agent/.env examples/coding-agent/.env.local
-AI_GATEWAY_API_KEY=... pnpm --filter @open-agent-sdk/example-coding-agent start
-# or pass a custom task:
+AI_GATEWAY_API_KEY=... pnpm --filter @open-agent-sdk/example-coding-agent chatbot
+# start a fresh session:
+AI_GATEWAY_API_KEY=... pnpm --filter @open-agent-sdk/example-coding-agent chatbot --new
+```
+
+### Run a single-task agent
+
+```bash
 AI_GATEWAY_API_KEY=... pnpm --filter @open-agent-sdk/example-coding-agent start "Count lines of code in src/"
 ```
 

@@ -1,14 +1,14 @@
 /**
- * Example: Interactive Multi-Turn Agent
+ * Example: Interactive Chatbot
  *
- * An interactive CLI agent with:
+ * A terminal chatbot powered by Open Agent SDK with:
  *   - Session persistence across runs (JSONL file)
  *   - Auto-compaction when context gets large
  *   - Streaming responses
  *
  * Run:
- *   pnpm multi-turn              # resume or start a session
- *   pnpm multi-turn --new        # start a fresh session
+ *   pnpm chatbot              # resume or start a session
+ *   pnpm chatbot --new        # start a fresh session
  */
 
 import "dotenv/config";
