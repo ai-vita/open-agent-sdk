@@ -1,14 +1,14 @@
 /**
- * Example: Multi-Turn Agent
+ * Example: Interactive Multi-Turn Agent
  *
- * Demonstrates the Agent class for stateful multi-turn conversations with:
- *   - Automatic conversation state management
+ * An interactive CLI agent with:
+ *   - Session persistence across runs (JSONL file)
  *   - Auto-compaction when context gets large
- *   - Message steering for injecting guidance
- *   - Streaming support
+ *   - Streaming responses
  *
  * Run:
- *   pnpm multi-turn
+ *   pnpm multi-turn              # resume or start a session
+ *   pnpm multi-turn --new        # start a fresh session
  */
 
 import "dotenv/config";
@@ -16,14 +16,30 @@ import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local", override: true });
 
-import { Agent } from "@open-agent-sdk/core";
+import { existsSync, unlinkSync } from "node:fs";
+import path from "node:path";
+import { createInterface } from "node:readline/promises";
+import { Agent, SessionManager } from "@open-agent-sdk/core";
 import { LocalSandbox } from "@open-agent-sdk/sandbox-local";
 import { createAgentTools } from "@open-agent-sdk/tools";
 import { gateway } from "ai";
 
+const SESSION_FILE = ".session.jsonl";
+
 async function main() {
-  const model = gateway("anthropic/claude-sonnet-4.6");
   const cwd = process.cwd();
+  const sessionPath = path.join(cwd, SESSION_FILE);
+
+  // --new flag resets the session
+  if (process.argv.includes("--new") && existsSync(sessionPath)) {
+    unlinkSync(sessionPath);
+    console.log("Session cleared.\n");
+  }
+
+  const sessionManager = new SessionManager(sessionPath);
+  const resumed = sessionManager.getMessages().length > 0;
+
+  const model = gateway("anthropic/claude-sonnet-4.6");
   const sandbox = new LocalSandbox({ cwd });
   const { tools } = createAgentTools(sandbox, {
     tools: { Bash: { timeout: 30_000 } },
@@ -38,6 +54,7 @@ async function main() {
       "Use the available tools to complete the task.",
     ].join("\n\n"),
     maxSteps: 10,
+    sessionManager,
     compaction: {
       maxTokens: 200_000,
       keepRecentTokens: 20_000,
@@ -45,64 +62,43 @@ async function main() {
     },
   });
 
-  // ── Turn 1: Initial task ──────────────────────────────────────────────────
-  console.log(`Turn 1: Listing files\n${"─".repeat(60)}`);
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
 
-  for await (const event of agent.stream(
-    "List the files in the current directory and summarize what you see.",
-  )) {
-    switch (event.type) {
-      case "text-delta":
-        process.stdout.write(event.delta);
-        break;
-      case "tool-call":
-        console.log(`\n[tool] ${event.toolName}`);
-        break;
-      case "done":
-        console.log(
-          `\n${"─".repeat(60)}\nTokens: input=${event.usage.inputTokens} output=${event.usage.outputTokens}`,
-        );
-        break;
+  if (resumed) {
+    console.log(`Resumed session (${sessionManager.getMessages().length} messages).`);
+  }
+  console.log('Type your message, or "exit" to quit.\n');
+
+  const separator = "─".repeat(60);
+
+  while (true) {
+    const input = await rl.question(">").catch(() => null);
+    if (input === null || input.trim() === "exit") break;
+    if (!input.trim()) continue;
+
+    console.log(separator);
+
+    for await (const event of agent.stream(input)) {
+      switch (event.type) {
+        case "text-delta":
+          process.stdout.write(event.delta);
+          break;
+        case "tool-call":
+          console.log(`\n[tool] ${event.toolName}(${JSON.stringify(event.input).slice(0, 80)}...)`);
+          break;
+        case "done":
+          console.log(
+            `\n${separator}\nTokens: input=${event.usage.inputTokens} output=${event.usage.outputTokens}`,
+          );
+          break;
+      }
     }
+
+    console.log();
   }
 
-  // ── Turn 2: Follow-up using conversation context ──────────────────────────
-  console.log(`\n\nTurn 2: Follow-up question\n${"─".repeat(60)}`);
-
-  for await (const event of agent.stream(
-    "Which of those files is the main entry point? Read it and explain what it does.",
-  )) {
-    switch (event.type) {
-      case "text-delta":
-        process.stdout.write(event.delta);
-        break;
-      case "done":
-        console.log(
-          `\n${"─".repeat(60)}\nTokens: input=${event.usage.inputTokens} output=${event.usage.outputTokens}`,
-        );
-        break;
-    }
-  }
-
-  // ── Turn 3: Steering ──────────────────────────────────────────────────────
-  console.log(`\n\nTurn 3: Steered review\n${"─".repeat(60)}`);
-
-  agent.steer({ role: "user", content: "Focus specifically on error handling patterns." });
-
-  for await (const event of agent.stream("Review the code you just read.")) {
-    switch (event.type) {
-      case "text-delta":
-        process.stdout.write(event.delta);
-        break;
-      case "done":
-        console.log(
-          `\n${"─".repeat(60)}\nTokens: input=${event.usage.inputTokens} output=${event.usage.outputTokens}`,
-        );
-        break;
-    }
-  }
-
-  console.log(`\n\nConversation: ${agent.getMessages().length} messages total`);
+  rl.close();
+  console.log("Bye!");
 }
 
 main().catch((err) => {

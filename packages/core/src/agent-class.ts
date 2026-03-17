@@ -73,6 +73,7 @@ export class Agent {
    * Returns the array of events (including the final DoneEvent).
    */
   async generate(prompt: string | ModelMessage[]): Promise<AgentEvent[]> {
+    const previousLength = this.messages.length;
     const inputMessages = this.buildMessages(prompt);
     const events: AgentEvent[] = [];
 
@@ -92,7 +93,7 @@ export class Agent {
     }
 
     this.clearSteeredMessages();
-    await this.persistToSession(inputMessages);
+    await this.persistToSession(previousLength);
     await this.autoCompact();
 
     return events;
@@ -102,6 +103,7 @@ export class Agent {
    * Run the agent with streaming, yielding events as they arrive.
    */
   async *stream(prompt: string | ModelMessage[]): AsyncGenerator<AgentEvent> {
+    const previousLength = this.messages.length;
     const inputMessages = this.buildMessages(prompt);
 
     for await (const event of runAgent({
@@ -120,7 +122,7 @@ export class Agent {
     }
 
     this.clearSteeredMessages();
-    await this.persistToSession(inputMessages);
+    await this.persistToSession(previousLength);
     await this.autoCompact();
   }
 
@@ -140,10 +142,10 @@ export class Agent {
     this.steeredMessages = [];
   }
 
-  private async persistToSession(inputMessages: ModelMessage[]): Promise<void> {
+  private async persistToSession(previousLength: number): Promise<void> {
     if (!this.config.sessionManager) return;
 
-    for (const msg of this.messages.slice(inputMessages.length)) {
+    for (const msg of this.messages.slice(previousLength)) {
       this.config.sessionManager.append(msg);
     }
   }
