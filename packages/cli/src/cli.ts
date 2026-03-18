@@ -4,14 +4,15 @@
  * A standalone interactive coding agent powered by Open Agent SDK.
  *
  * Usage:
- *   oa              # start or resume a session in the current directory
- *   oa --new        # start a fresh session
- *   oa --model X    # use a specific model (default: anthropic/claude-sonnet-4.6)
- *   oa --help       # show help
- *   oa --version    # show version
+ *   oa                  # start a new session
+ *   oa -c / --continue  # resume the most recent session
+ *   oa -r / --resume    # pick a session to resume
+ *   oa -r <id>          # resume a specific session by timestamp prefix
+ *   oa --model X        # use a specific model (default: anthropic/claude-sonnet-4.6)
+ *   oa --help           # show help
  */
 
-import { existsSync, readFileSync, unlinkSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 import { createInterface } from "node:readline/promises";
@@ -24,7 +25,7 @@ import { createAgentTools } from "@open-agent-sdk/tools";
 import { gateway } from "ai";
 import dotenv from "dotenv";
 
-const SESSION_FILE = ".session.jsonl";
+import { formatSessionList, listSessions, resolveSessionPath } from "./sessions.js";
 
 function loadEnv() {
   dotenv.config({ path: path.join(homedir(), ".agents", ".env") });
@@ -45,32 +46,49 @@ Usage:
   oa [options]
 
 Options:
-  --new          Start a fresh session (discard previous)
-  --model <id>   Model to use (default: anthropic/claude-sonnet-4.6)
-  --help, -h     Show this help message
-  --version, -v  Show version
+  -c, --continue       Resume the most recent session for this project
+  -r, --resume [id]    Resume a specific session (or pick interactively)
+  --model <id>         Model to use (default: anthropic/claude-sonnet-4.6)
+  -h, --help           Show this help message
+  -v, --version        Show version
 
 Environment:
   AI_GATEWAY_API_KEY   API key for the AI gateway
 
 Configuration is loaded from ~/.agents/.env (shell env vars take precedence).
 The agent runs in the current working directory with access to
-filesystem and shell tools. Sessions are persisted to .session.jsonl.
+filesystem and shell tools. Sessions are stored in ~/.agents/sessions/.
 `;
 
 export function parseCliArgs(args: string[]) {
+  // Detect bare --resume / -r (no value) before parseArgs, which requires a value for string opts.
+  // A bare -r is followed by another flag (starting with -) or is the last arg.
+  let bareResume = false;
+  const filtered: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--resume" || args[i] === "-r") {
+      const next = args[i + 1];
+      if (!next || next.startsWith("-")) {
+        bareResume = true;
+        continue;
+      }
+    }
+    filtered.push(args[i]);
+  }
+
   const { values } = parseArgs({
-    args,
+    args: filtered,
     options: {
       help: { type: "boolean", short: "h", default: false },
       version: { type: "boolean", short: "v", default: false },
-      new: { type: "boolean", default: false },
+      continue: { type: "boolean", short: "c", default: false },
+      resume: { type: "string", short: "r" },
       model: { type: "string", default: "anthropic/claude-sonnet-4.6" },
     },
     strict: true,
     allowPositionals: false,
   });
-  return values;
+  return { ...values, bareResume };
 }
 
 async function main() {
@@ -89,15 +107,32 @@ async function main() {
   const cwd = process.cwd();
   loadEnv();
 
-  const sessionPath = path.join(cwd, SESSION_FILE);
+  const { sessionPath, isNew } = resolveSessionPath(cwd, {
+    continue: flags.continue,
+    resume: flags.bareResume ? true : flags.resume,
+  });
 
-  if (flags.new && existsSync(sessionPath)) {
-    unlinkSync(sessionPath);
-    console.log("Session cleared.\n");
+  let finalSessionPath = sessionPath;
+
+  if (!isNew && sessionPath === "") {
+    // Interactive picker for bare --resume
+    const sessions = listSessions(cwd);
+    if (sessions.length === 0) {
+      console.log("No sessions found. Starting a new session.\n");
+      finalSessionPath = resolveSessionPath(cwd, {}).sessionPath;
+    } else {
+      const rlPicker = createInterface({ input: process.stdin, output: process.stdout });
+      console.log(`Sessions for ${cwd}:`);
+      console.log(formatSessionList(sessions));
+      const answer = await rlPicker.question("Select session [1]: ");
+      rlPicker.close();
+      const idx = Math.max(0, (parseInt(answer, 10) || 1) - 1);
+      finalSessionPath = sessions[Math.min(idx, sessions.length - 1)].path;
+    }
   }
 
-  const sessionManager = new SessionManager(sessionPath);
-  const resumed = sessionManager.getMessages().length > 0;
+  const sessionManager = new SessionManager(finalSessionPath);
+  const resumed = !isNew && sessionManager.getMessages().length > 0;
 
   const model = gateway(flags.model);
   const sandbox = new LocalSandbox({ cwd });
@@ -136,7 +171,8 @@ async function main() {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
 
   if (resumed) {
-    console.log(`Resumed session (${sessionManager.getMessages().length} messages).`);
+    const ts = path.basename(finalSessionPath, ".jsonl");
+    console.log(`Resumed session ${ts} (${sessionManager.getMessages().length} messages).`);
   }
   if (skills.length > 0) {
     console.log(`Skills: ${skills.map((s) => s.name).join(", ")}`);

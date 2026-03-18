@@ -6,7 +6,9 @@ describe("parseCliArgs", () => {
     const flags = parseCliArgs([]);
     expect(flags.help).toBe(false);
     expect(flags.version).toBe(false);
-    expect(flags.new).toBe(false);
+    expect(flags.continue).toBe(false);
+    expect(flags.resume).toBeUndefined();
+    expect(flags.bareResume).toBe(false);
     expect(flags.model).toBe("anthropic/claude-sonnet-4.6");
   });
 
@@ -26,8 +28,26 @@ describe("parseCliArgs", () => {
     expect(parseCliArgs(["-v"]).version).toBe(true);
   });
 
-  it("parses --new", () => {
-    expect(parseCliArgs(["--new"]).new).toBe(true);
+  it("parses --continue / -c", () => {
+    expect(parseCliArgs(["--continue"]).continue).toBe(true);
+    expect(parseCliArgs(["-c"]).continue).toBe(true);
+  });
+
+  it("parses --resume with id", () => {
+    const flags = parseCliArgs(["--resume", "2026-03-18T10"]);
+    expect(flags.resume).toBe("2026-03-18T10");
+    expect(flags.bareResume).toBe(false);
+  });
+
+  it("parses bare --resume (no id)", () => {
+    const flags = parseCliArgs(["--resume"]);
+    expect(flags.bareResume).toBe(true);
+    expect(flags.resume).toBeUndefined();
+  });
+
+  it("parses bare -r (no id)", () => {
+    const flags = parseCliArgs(["-r"]);
+    expect(flags.bareResume).toBe(true);
   });
 
   it("parses --model with value", () => {
