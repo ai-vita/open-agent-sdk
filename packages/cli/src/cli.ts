@@ -12,6 +12,7 @@
  */
 
 import { existsSync, readFileSync, unlinkSync } from "node:fs";
+import { homedir } from "node:os";
 import path from "node:path";
 import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
@@ -25,9 +26,8 @@ import dotenv from "dotenv";
 
 const SESSION_FILE = ".session.jsonl";
 
-function loadEnv(cwd: string) {
-  dotenv.config({ path: path.join(cwd, ".env") });
-  dotenv.config({ path: path.join(cwd, ".env.local"), override: true });
+function loadEnv() {
+  dotenv.config({ path: path.join(homedir(), ".agents", ".env") });
 }
 
 function getVersion(): string {
@@ -51,8 +51,9 @@ Options:
   --version, -v  Show version
 
 Environment:
-  AI_GATEWAY_API_KEY   API key for the AI gateway (can be set in .env.local)
+  AI_GATEWAY_API_KEY   API key for the AI gateway
 
+Configuration is loaded from ~/.agents/.env (shell env vars take precedence).
 The agent runs in the current working directory with access to
 filesystem and shell tools. Sessions are persisted to .session.jsonl.
 `;
@@ -86,7 +87,7 @@ async function main() {
   }
 
   const cwd = process.cwd();
-  loadEnv(cwd);
+  loadEnv();
 
   const sessionPath = path.join(cwd, SESSION_FILE);
 
