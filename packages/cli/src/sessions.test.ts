@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -59,7 +59,7 @@ describe("resolveSessionPath", () => {
   });
 
   it("--continue with no sessions starts fresh", () => {
-    const result = resolveSessionPath("/tmp/empty-project-" + Date.now(), { continue: true });
+    const result = resolveSessionPath(`/tmp/empty-project-${Date.now()}`, { continue: true });
     expect(result.isNew).toBe(true);
   });
 

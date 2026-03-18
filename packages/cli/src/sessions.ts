@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 
@@ -13,7 +13,7 @@ export function getSessionDir(cwd: string): string {
 }
 
 function generateTimestampFilename(): string {
-  return new Date().toISOString().replace(/:/g, "-").replace(/\..+/, "") + ".jsonl";
+  return `${new Date().toISOString().replace(/:/g, "-").replace(/\..+/, "")}.jsonl`;
 }
 
 export interface SessionInfo {
