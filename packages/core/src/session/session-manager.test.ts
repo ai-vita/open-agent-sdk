@@ -21,8 +21,10 @@ describe("SessionManager", () => {
     rmSync(testDir, { recursive: true, force: true });
   });
 
-  it("creates a new session file", () => {
-    new SessionManager(sessionPath);
+  it("defers file creation until first message", () => {
+    const sm = new SessionManager(sessionPath);
+    expect(existsSync(sessionPath)).toBe(false);
+    sm.append({ role: "user", content: "hello" });
     expect(existsSync(sessionPath)).toBe(true);
   });
 

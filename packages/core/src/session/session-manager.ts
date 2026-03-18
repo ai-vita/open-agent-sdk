@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { ModelMessage } from "ai";
 import type { BranchSummaryEntry, CompactionEntry, MessageEntry, SessionEntry } from "./types.js";
@@ -138,11 +138,7 @@ export class SessionManager {
   }
 
   private load(): void {
-    if (!existsSync(this.filePath)) {
-      mkdirSync(path.dirname(this.filePath), { recursive: true });
-      writeFileSync(this.filePath, "", "utf-8");
-      return;
-    }
+    if (!existsSync(this.filePath)) return;
 
     const content = readFileSync(this.filePath, "utf-8").trim();
     if (!content) return;
@@ -156,6 +152,9 @@ export class SessionManager {
   }
 
   private persistEntry(entry: SessionEntry): void {
+    if (!existsSync(this.filePath)) {
+      mkdirSync(path.dirname(this.filePath), { recursive: true });
+    }
     appendFileSync(this.filePath, `${JSON.stringify(entry)}\n`, "utf-8");
   }
 }
