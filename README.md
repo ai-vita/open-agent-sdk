@@ -46,6 +46,8 @@ pnpm test
 
 A terminal coding agent you can install globally and run from any directory. Session persistence, auto-compaction, streaming, skill discovery — all built in.
 
+<a href="https://asciinema.org/a/857586?autoplay=1"><img src="https://asciinema.org/a/857586.svg" alt="oa CLI demo" width="100%" /></a>
+
 ```bash
 # Run directly from source (dev):
 AI_GATEWAY_API_KEY=... pnpm --filter @open-agent-sdk/cli start
