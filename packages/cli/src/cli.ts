@@ -25,6 +25,7 @@ import { createAgentTools } from "@open-agent-sdk/tools";
 import { gateway } from "ai";
 import dotenv from "dotenv";
 
+import { renderSessionHistory } from "./history.js";
 import { formatSessionList, listSessions, resolveSessionPath } from "./sessions.js";
 
 function loadEnv() {
@@ -170,16 +171,28 @@ async function main() {
 
   const rl = createInterface({ input: process.stdin, output: process.stdout });
 
+  const separator = "─".repeat(60);
+
+  // CLI header
   if (resumed) {
     const ts = path.basename(finalSessionPath, ".jsonl");
-    console.log(`Resumed session ${ts} (${sessionManager.getMessages().length} messages).`);
+    console.log(`Resumed session ${ts}`);
   }
   if (skills.length > 0) {
     console.log(`Skills: ${skills.map((s) => s.name).join(", ")}`);
   }
   console.log('Type your message, or "/exit" to quit.\n');
 
-  const separator = "─".repeat(60);
+  // Replay conversation history after header
+  if (resumed) {
+    const history = renderSessionHistory(sessionManager.getPathEntries());
+    if (history) {
+      console.log(separator);
+      console.log(history);
+      console.log(separator);
+      console.log();
+    }
+  }
 
   while (true) {
     const input = await rl.question("> ").catch(() => null);

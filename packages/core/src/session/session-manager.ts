@@ -122,6 +122,20 @@ export class SessionManager {
     return entry.id;
   }
 
+  /** Get the ordered session entries along the current leaf-to-root path (root-first). */
+  getPathEntries(): SessionEntry[] {
+    if (!this.leafId) return [];
+    const result: SessionEntry[] = [];
+    let currentId: string | null = this.leafId;
+    while (currentId) {
+      const entry = this.byId.get(currentId);
+      if (!entry) break;
+      result.push(entry);
+      currentId = entry.parentId;
+    }
+    return result.reverse();
+  }
+
   /** Get the current leaf entry ID. */
   getLeafId(): string | null {
     return this.leafId;
