@@ -110,46 +110,21 @@ export function getMessagesSince(
   return rows.map(rowToMessage);
 }
 
-/** Get new messages across multiple chats since a timestamp, excluding bot messages. */
+/** Get new messages across all chats since a timestamp, excluding bot messages. */
 export function getNewMessages(
   db: Database.Database,
-  chatIds: string[],
   sinceTimestamp: string,
   limit = MESSAGE_LIMIT,
 ): InboundMessage[] {
-  if (chatIds.length === 0) {
-    // All chats
-    const rows = db
-      .prepare(
-        `SELECT id, chat_id, sender, sender_name, content, timestamp, channel, is_from_me
-         FROM messages
-         WHERE timestamp > ? AND is_bot_message = 0
-         ORDER BY timestamp ASC
-         LIMIT ?`,
-      )
-      .all(sinceTimestamp, limit) as Array<{
-      id: string;
-      chat_id: string;
-      sender: string;
-      sender_name: string;
-      content: string;
-      timestamp: string;
-      channel: string;
-      is_from_me: number;
-    }>;
-    return rows.map(rowToMessage);
-  }
-
-  const placeholders = chatIds.map(() => "?").join(", ");
   const rows = db
     .prepare(
       `SELECT id, chat_id, sender, sender_name, content, timestamp, channel, is_from_me
        FROM messages
-       WHERE chat_id IN (${placeholders}) AND timestamp > ? AND is_bot_message = 0
+       WHERE timestamp > ? AND is_bot_message = 0
        ORDER BY timestamp ASC
        LIMIT ?`,
     )
-    .all(...chatIds, sinceTimestamp, limit) as Array<{
+    .all(sinceTimestamp, limit) as Array<{
     id: string;
     chat_id: string;
     sender: string;

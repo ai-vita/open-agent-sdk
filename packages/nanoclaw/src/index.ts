@@ -4,12 +4,11 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { gateway } from "ai";
 import type { Channel } from "./channels/interface.js";
-import { registerChannel } from "./channels/interface.js";
 import { createTelegramChannel } from "./channels/telegram.js";
 import { createTerminalChannel } from "./channels/terminal.js";
 import { loadConfig } from "./config.js";
 import { startLoop } from "./loop.js";
-import { initDb, storeChatMetadata, storeMessage } from "./store/db.js";
+import { initDb, storeMessage } from "./store/db.js";
 import type { InboundMessage } from "./types.js";
 
 const VERSION = "0.1.0";
@@ -45,35 +44,23 @@ Options:
   // 3. Init database
   const db = initDb(config.dataDir);
 
-  // 4. Register channel factories
-  registerChannel("telegram", createTelegramChannel);
-  registerChannel("terminal", createTerminalChannel);
-
-  // 5. Connect channels
+  // 4. Connect channels
   const activeChannels: Channel[] = [];
 
   const onMessage = (msg: InboundMessage) => {
     storeMessage(db, msg);
-    storeChatMetadata(db, msg.chatId, {
-      channel: msg.channel,
-      lastMessageAt: msg.timestamp,
-    });
   };
 
-  if (!forceTerminal) {
-    // Try Telegram
-    const telegram = createTelegramChannel({ onMessage });
-    if (telegram) {
-      await telegram.connect();
-      activeChannels.push(telegram);
-      console.log("Connected: Telegram");
-    }
+  if (!forceTerminal && config.telegramBotToken) {
+    const telegram = createTelegramChannel({ token: config.telegramBotToken, onMessage });
+    await telegram.connect();
+    activeChannels.push(telegram);
+    console.log("Connected: Telegram");
   }
 
   // Fall back to terminal if no channels connected or forced
   if (activeChannels.length === 0 || forceTerminal) {
     const terminal = createTerminalChannel({ onMessage });
-    if (!terminal) throw new Error("Terminal channel failed to initialize");
     await terminal.connect();
     activeChannels.push(terminal);
     console.log("Connected: Terminal (dev mode)");

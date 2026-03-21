@@ -27,8 +27,7 @@ async function loadGroupMemory(sandbox: Sandbox): Promise<string> {
 function buildSystemPrompt(assistantName: string, groupId: string, memory: string): string {
   const parts = [
     `You are ${assistantName}, a helpful AI assistant.`,
-    `You are chatting in group: ${groupId}.`,
-    "",
+    `You are chatting in group: ${groupId}.\n`,
     "You have access to tools for reading files, writing files, running bash commands, and more.",
     "Keep your responses helpful, concise, and friendly.",
   ];

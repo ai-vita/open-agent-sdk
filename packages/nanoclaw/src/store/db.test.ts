@@ -57,17 +57,16 @@ describe("message store", () => {
     storeMessage(db, makeMsg({ id: "2", chatId: "chat-2", timestamp: "2024-01-01T10:01:00.000Z" }));
     storeMessage(db, makeMsg({ id: "3", chatId: "chat-3", timestamp: "2024-01-01T10:02:00.000Z" }));
 
-    const rows = getNewMessages(db, ["chat-1", "chat-2"], "2024-01-01T09:00:00.000Z");
-    expect(rows).toHaveLength(2);
-    expect(rows.map((r) => r.chatId)).toEqual(["chat-1", "chat-2"]);
+    const rows = getNewMessages(db, "2024-01-01T09:00:00.000Z");
+    expect(rows).toHaveLength(3);
   });
 
-  it("getNewMessages with empty chatIds returns all chats", () => {
+  it("getNewMessages returns all chats", () => {
     const db = initMemoryDb();
     storeMessage(db, makeMsg({ id: "1", chatId: "chat-1", timestamp: "2024-01-01T10:00:00.000Z" }));
     storeMessage(db, makeMsg({ id: "2", chatId: "chat-2", timestamp: "2024-01-01T10:01:00.000Z" }));
 
-    const rows = getNewMessages(db, [], "2024-01-01T09:00:00.000Z");
+    const rows = getNewMessages(db, "2024-01-01T09:00:00.000Z");
     expect(rows).toHaveLength(2);
   });
 

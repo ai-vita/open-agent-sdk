@@ -121,7 +121,7 @@ async function poll(ctx: LoopContext): Promise<void> {
   const lastTimestamp = getRouterState(ctx.db, CURSOR_KEY) || "1970-01-01T00:00:00.000Z";
 
   // Get all new messages across all chats
-  const messages = getNewMessages(ctx.db, [], lastTimestamp);
+  const messages = getNewMessages(ctx.db, lastTimestamp);
   if (messages.length === 0) return;
 
   // Advance global cursor immediately
@@ -129,9 +129,9 @@ async function poll(ctx: LoopContext): Promise<void> {
   setRouterState(ctx.db, CURSOR_KEY, newCursor);
 
   // Group by chatId
-  const byChatId = new Map<string, boolean>();
+  const chatIds = new Set<string>();
   for (const msg of messages) {
-    byChatId.set(msg.chatId, true);
+    chatIds.add(msg.chatId);
     // Update chat metadata
     storeChatMetadata(ctx.db, msg.chatId, {
       channel: msg.channel,
@@ -140,7 +140,7 @@ async function poll(ctx: LoopContext): Promise<void> {
   }
 
   // Process each chat sequentially (MVP — Layer 2 adds concurrency)
-  for (const chatId of byChatId.keys()) {
+  for (const chatId of chatIds) {
     await processChat(chatId, ctx);
   }
 }

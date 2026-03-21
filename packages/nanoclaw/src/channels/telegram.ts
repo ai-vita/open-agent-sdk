@@ -1,12 +1,13 @@
 import { Bot } from "grammy";
 import type { InboundMessage } from "../types.js";
-import type { Channel, ChannelFactory } from "./interface.js";
+import type { Channel } from "./interface.js";
 
-/** Creates a Telegram channel via grammY. Returns null if TELEGRAM_BOT_TOKEN not set. */
-export const createTelegramChannel: ChannelFactory = ({ onMessage }): Channel | null => {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return null;
-
+/** Creates a Telegram channel via grammY. Caller must ensure token is available. */
+export function createTelegramChannel(opts: {
+  token: string;
+  onMessage: (msg: InboundMessage) => void;
+}): Channel {
+  const { token, onMessage } = opts;
   const bot = new Bot(token);
 
   bot.on("message:text", (ctx) => {
@@ -41,4 +42,4 @@ export const createTelegramChannel: ChannelFactory = ({ onMessage }): Channel | 
       await bot.api.sendChatAction(chatId, "typing");
     },
   };
-};
+}
