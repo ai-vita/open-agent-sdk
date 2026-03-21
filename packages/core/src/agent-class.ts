@@ -8,7 +8,7 @@ import {
   compactConversation,
   contextNeedsCompaction,
 } from "./compaction.js";
-import type { SessionManager } from "./session/session-manager.js";
+import type { SessionStore } from "./session/session-store.js";
 import type { ToolSet } from "./tool-types.js";
 
 export interface AgentCompactionConfig {
@@ -36,7 +36,7 @@ export interface AgentConfig {
   /** Maximum steps per generate/stream call (default: 20) */
   maxSteps?: number;
   /** Optional session manager for persistence */
-  sessionManager?: SessionManager;
+  sessionManager?: SessionStore;
   /** Optional compaction config for auto-compaction */
   compaction?: AgentCompactionConfig;
 }
@@ -169,6 +169,22 @@ export class Agent {
     const result = await compactConversation(this.messages, compactionConfig, this.compactionState);
 
     if (result.didCompact) {
+      // Persist compaction to session store so it survives restart
+      if (this.config.sessionManager) {
+        const pathEntries = this.config.sessionManager.getPathEntries();
+        const messageEntryIds = pathEntries.filter((e) => e.type === "message").map((e) => e.id);
+        // The compacted result is [summary, ack, ...recentMessages]
+        // so the number of kept original messages = result.messages.length - 2
+        const keptCount = result.messages.length - 2;
+        const compactedEntryIds = messageEntryIds.slice(0, messageEntryIds.length - keptCount);
+        if (compactedEntryIds.length > 0) {
+          this.config.sessionManager.appendCompaction(
+            this.compactionState.conversationSummary || "",
+            compactedEntryIds,
+          );
+        }
+      }
+
       this.messages = result.messages;
       this.compactionState = result.state;
     }

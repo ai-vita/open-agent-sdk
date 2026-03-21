@@ -1,0 +1,37 @@
+{
+  "name": "@open-agent-sdk/nanoclaw",
+  "version": "0.1.0",
+  "description": "Multi-channel AI assistant daemon powered by Open Agent SDK",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "nanoclaw": "dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "build": "tsup",
+    "compile": "cd /tmp && bun build $OLDPWD/src/index.ts --compile --outfile $OLDPWD/dist/nanoclaw",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@open-agent-sdk/core": "workspace:*",
+    "@open-agent-sdk/sandbox-local": "workspace:*",
+    "@open-agent-sdk/tools": "workspace:*",
+    "@open-agent-sdk/skills": "workspace:*",
+    "ai": "^6.0.0",
+    "better-sqlite3": "^11.0.0",
+    "dotenv": "^16.0.0",
+    "grammy": "^1.0.0",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.0.0",
+    "tsx": "^4.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}

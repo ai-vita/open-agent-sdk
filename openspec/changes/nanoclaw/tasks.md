@@ -2,7 +2,7 @@
 
 ### Part 1: SessionStore Interface (packages/core)
 
-- [ ] **Extract `SessionStore` interface in `packages/core/src/session/session-store.ts`**
+- [x] **Extract `SessionStore` interface in `packages/core/src/session/session-store.ts`**
   - Define interface with: `append()`, `getMessages()`, `appendCompaction()`, `branch()`, `getPathEntries()`, `getLeafId()`
   - Add `implements SessionStore` to `SessionManager` class
   - Change `AgentConfig.sessionManager` type from `SessionManager` to `SessionStore`
@@ -10,7 +10,7 @@
   - Verify existing CLI and tests compile without changes (no breaking change)
   - Fix: `Agent.autoCompact()` should call `sessionManager.appendCompaction()` to persist compaction — currently it compacts in-memory only, so compacted sessions don't survive restart
 
-- [ ] **Write tests for `SessionStore` contract in `packages/core/src/session/session-store.test.ts`**
+- [x] **Write tests for `SessionStore` contract in `packages/core/src/session/session-store.test.ts`**
   - Verify `SessionManager` satisfies `SessionStore` interface
   - Test append → getMessages round-trip
   - Test appendCompaction substitutes compacted messages with summary
@@ -21,7 +21,7 @@
 
 ### Part 2: Nanoclaw Package Scaffold
 
-- [ ] **Create `packages/nanoclaw/` package scaffold**
+- [x] **Create `packages/nanoclaw/` package scaffold**
   - `package.json` with dependencies: `better-sqlite3`, `grammy`, `@open-agent-sdk/{core,tools,sandbox-local,skills}`, `ai`, `dotenv`, `zod`
   - `@types/better-sqlite3` as dev dependency
   - `tsconfig.json` extending `../../tsconfig.base.json`
@@ -29,18 +29,18 @@
   - Scripts: `start` (tsx), `build` (tsup), `compile` (bun), `typecheck` (tsc)
   - Add to pnpm workspace
 
-- [ ] **Create `packages/nanoclaw/src/config.ts`** — configuration module
+- [x] **Create `packages/nanoclaw/src/config.ts`** — configuration module
   - Load env vars with defaults: `NANOCLAW_NAME`, `TELEGRAM_BOT_TOKEN`, `AI_GATEWAY_API_KEY`, `NANOCLAW_MODEL`, `NANOCLAW_POLL_INTERVAL`, `NANOCLAW_MAX_STEPS`, `NANOCLAW_DATA_DIR`
   - Export typed config object
   - Load `.env` from `~/.agents/.env` (same as CLI)
 
-- [ ] **Create `packages/nanoclaw/src/types.ts`** — shared type definitions
+- [x] **Create `packages/nanoclaw/src/types.ts`** — shared type definitions
   - `InboundMessage` interface (with `channel` field for DB storage and outbound routing)
   - `NanoclawConfig` type (output of config loading)
 
 ### Part 3: Message Store
 
-- [ ] **Create `packages/nanoclaw/src/store/db.ts`** — SQLite message store
+- [x] **Create `packages/nanoclaw/src/store/db.ts`** — SQLite message store
   - `initDb(dataDir)`: open `better-sqlite3` database, run `CREATE TABLE IF NOT EXISTS` for all tables (messages, chats, router_state, session_entries)
   - `storeMessage(msg)`: INSERT OR REPLACE (upsert on duplicate ID)
   - `getNewMessages(chatIds, sinceTimestamp)`: messages across groups, exclude bot messages
@@ -49,7 +49,7 @@
   - `getRouterState(key)` / `setRouterState(key, value)`: KV cursor store
   - All queries use parameterized SQL (no string interpolation)
 
-- [ ] **Write tests for `packages/nanoclaw/src/store/db.test.ts`**
+- [x] **Write tests for `packages/nanoclaw/src/store/db.test.ts`**
   - Reference: nanoclaw `src/db.test.ts` for feature parity
   - storeMessage upserts on duplicate ID
   - getMessagesSince filters by timestamp, excludes bot messages
@@ -61,7 +61,7 @@
 
 ### Part 4: SQLite Session Store
 
-- [ ] **Create `packages/nanoclaw/src/store/session-store.ts`** — `SqliteSessionStore implements SessionStore`
+- [x] **Create `packages/nanoclaw/src/store/session-store.ts`** — `SqliteSessionStore implements SessionStore`
   - Constructor: `(db: Database, groupId: string)` — loads entries for group, builds in-memory tree
   - `append()`: insert row + update leaf
   - `getMessages()`: tree traversal with compaction substitution (same algorithm as `SessionManager`)
@@ -69,7 +69,7 @@
   - `branch()`: insert branch_summary row, throw if entryId not found
   - `getPathEntries()` / `getLeafId()`: same semantics as `SessionManager`
 
-- [ ] **Write tests for `packages/nanoclaw/src/store/session-store.test.ts`**
+- [x] **Write tests for `packages/nanoclaw/src/store/session-store.test.ts`**
   - Run the same logical test cases as the `SessionStore` contract tests from Part 1
   - Additionally test SQLite-specific behavior:
     - Entries persist across `SqliteSessionStore` instances (reload from DB)
@@ -78,19 +78,19 @@
 
 ### Part 5: Channel Interface + Implementations
 
-- [ ] **Create `packages/nanoclaw/src/channels/interface.ts`** — channel contracts
+- [x] **Create `packages/nanoclaw/src/channels/interface.ts`** — channel contracts
   - `Channel` interface: `name`, `connect()`, `sendMessage()`, `disconnect()`, `ownsChat?()`, `setTyping?()`
   - `ChannelFactory` type: `(opts) => Channel | null`
   - `registerChannel(name, factory)`, `getChannelFactory(name)`, `getRegisteredChannelNames()`
 
-- [ ] **Write tests for `packages/nanoclaw/src/channels/interface.test.ts`**
+- [x] **Write tests for `packages/nanoclaw/src/channels/interface.test.ts`**
   - Reference: nanoclaw `src/channels/registry.test.ts`
   - getChannelFactory returns undefined for unknown channel
   - registerChannel + getChannelFactory round-trip
   - getRegisteredChannelNames includes registered
   - Later registration overwrites earlier (last-wins)
 
-- [ ] **Create `packages/nanoclaw/src/channels/telegram.ts`** — grammY adapter
+- [x] **Create `packages/nanoclaw/src/channels/telegram.ts`** — grammY adapter
   - Factory returns null if `TELEGRAM_BOT_TOKEN` not set
   - Maps grammY `message:text` events to `InboundMessage`
   - `sendMessage`: `bot.api.sendMessage(chatId, text)`
@@ -98,7 +98,7 @@
   - `connect`: `bot.start()` (long polling)
   - `disconnect`: `bot.stop()`
 
-- [ ] **Create `packages/nanoclaw/src/channels/terminal.ts`** — dev mode channel
+- [x] **Create `packages/nanoclaw/src/channels/terminal.ts`** — dev mode channel
   - Uses `readline` for stdin input
   - Fixed chatId `"terminal"`, sender `"user"`
   - Prints agent responses to stdout
@@ -106,12 +106,12 @@
 
 ### Part 6: Message Formatting
 
-- [ ] **Create message formatting utilities (in `packages/nanoclaw/src/format.ts`)**
+- [x] **Create message formatting utilities (in `packages/nanoclaw/src/format.ts`)**
   - `escapeXml(str)`: escape `&`, `<`, `>`, `"` characters
   - `formatMessages(messages, chatName)`: format as XML with timestamp conversion
   - `stripInternalTags(text)`: remove `<internal>...</internal>` blocks from agent output
 
-- [ ] **Write tests for `packages/nanoclaw/src/format.test.ts`**
+- [x] **Write tests for `packages/nanoclaw/src/format.test.ts`**
   - Reference: nanoclaw `src/formatting.test.ts`
   - escapeXml handles &, <, >, " and multiple special chars
   - formatMessages produces valid XML with sender, timestamp, content
@@ -122,14 +122,14 @@
 
 ### Part 7: Message Loop + Agent Runner
 
-- [ ] **Create `packages/nanoclaw/src/loop.ts`** — message polling and dispatch
+- [x] **Create `packages/nanoclaw/src/loop.ts`** — message polling and dispatch
   - `startLoop(db, channels, config)`: returns interval handle
   - Poll every `POLL_INTERVAL` ms
   - Fetch new messages, group by chatId, format XML, dispatch to runner
   - Cursor management: advance before processing, rollback on error before output
   - Find owning channel for outbound messages
 
-- [ ] **Create `packages/nanoclaw/src/runner.ts`** — agent orchestration
+- [x] **Create `packages/nanoclaw/src/runner.ts`** — agent orchestration
   - `runGroupAgent(opts)`: async generator yielding text chunks
   - Creates `Agent` with: model, tools (`createAgentTools`), per-group sandbox, `SqliteSessionStore`, system prompt, compaction config
   - System prompt includes: assistant name, chat context, group AGENTS.md memory
@@ -138,7 +138,7 @@
 
 ### Part 8: Daemon Entry Point
 
-- [ ] **Create `packages/nanoclaw/src/index.ts`** — daemon main
+- [x] **Create `packages/nanoclaw/src/index.ts`** — daemon main
   - Load config from env
   - Init SQLite database
   - Register and connect channels
@@ -147,7 +147,7 @@
   - Fall back to terminal channel if no others configured
   - CLI flags: `--terminal` (force terminal mode), `--help`, `--version`
 
-- [ ] **Integration smoke test**
+- [x] **Integration smoke test**
   - Verify daemon starts with terminal channel (no Telegram token)
   - Send a message via terminal → agent processes → response printed
   - Verify session persists in SQLite across invocations

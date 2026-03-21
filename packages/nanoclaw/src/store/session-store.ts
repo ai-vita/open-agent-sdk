@@ -1,26 +1,30 @@
 import { randomUUID } from "node:crypto";
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
-import path from "node:path";
+import type {
+  BranchSummaryEntry,
+  CompactionEntry,
+  MessageEntry,
+  SessionEntry,
+  SessionStore,
+} from "@open-agent-sdk/core";
 import type { ModelMessage } from "ai";
-import type { SessionStore } from "./session-store.js";
-import type { BranchSummaryEntry, CompactionEntry, MessageEntry, SessionEntry } from "./types.js";
+import type Database from "better-sqlite3";
 
 /**
- * JSONL-based session manager with tree structure for conversation persistence.
- * Supports linear replay, branching, and compaction.
+ * SQLite-backed SessionStore. Same tree-traversal logic as SessionManager,
+ * but reads/writes go to the `session_entries` table partitioned by `group_id`.
  */
-export class SessionManager implements SessionStore {
+export class SqliteSessionStore implements SessionStore {
   private entries: SessionEntry[] = [];
   private byId = new Map<string, SessionEntry>();
   private leafId: string | null = null;
-  private filePath: string;
 
-  constructor(filePath: string) {
-    this.filePath = filePath;
+  constructor(
+    private db: Database.Database,
+    private groupId: string,
+  ) {
     this.load();
   }
 
-  /** Append a message to the session. */
   append(message: ModelMessage): string {
     const entry: MessageEntry = {
       type: "message",
@@ -35,11 +39,9 @@ export class SessionManager implements SessionStore {
     return entry.id;
   }
 
-  /** Get the ordered conversation messages by traversing from leaf to root. */
   getMessages(): ModelMessage[] {
     if (!this.leafId) return [];
 
-    // Walk from leaf to root collecting the path
     const pathEntries: SessionEntry[] = [];
     let currentId: string | null = this.leafId;
     while (currentId) {
@@ -49,7 +51,6 @@ export class SessionManager implements SessionStore {
       currentId = entry.parentId;
     }
 
-    // Build messages, substituting compaction summaries
     const compactedIds = new Set<string>();
     for (const entry of pathEntries) {
       if (entry.type === "compaction") {
@@ -86,7 +87,6 @@ export class SessionManager implements SessionStore {
     return messages;
   }
 
-  /** Branch from an earlier entry, abandoning subsequent messages. */
   branch(entryId: string, reason: string): string {
     if (!this.byId.has(entryId)) {
       throw new Error(`Entry ${entryId} not found`);
@@ -107,7 +107,6 @@ export class SessionManager implements SessionStore {
     return branchEntry.id;
   }
 
-  /** Append a compaction entry that replaces older messages with a summary. */
   appendCompaction(summary: string, compactedEntryIds: string[]): string {
     const entry: CompactionEntry = {
       type: "compaction",
@@ -123,7 +122,6 @@ export class SessionManager implements SessionStore {
     return entry.id;
   }
 
-  /** Get the ordered session entries along the current leaf-to-root path (root-first). */
   getPathEntries(): SessionEntry[] {
     if (!this.leafId) return [];
     const result: SessionEntry[] = [];
@@ -137,14 +135,8 @@ export class SessionManager implements SessionStore {
     return result.reverse();
   }
 
-  /** Get the current leaf entry ID. */
   getLeafId(): string | null {
     return this.leafId;
-  }
-
-  /** Get all entries in the session. */
-  getEntries(): readonly SessionEntry[] {
-    return this.entries;
   }
 
   private addEntry(entry: SessionEntry): void {
@@ -153,23 +145,38 @@ export class SessionManager implements SessionStore {
   }
 
   private load(): void {
-    if (!existsSync(this.filePath)) return;
+    const rows = this.db
+      .prepare(
+        "SELECT id, parent_id, type, data, created_at FROM session_entries WHERE group_id = ? ORDER BY created_at ASC",
+      )
+      .all(this.groupId) as Array<{
+      id: string;
+      parent_id: string | null;
+      type: string;
+      data: string;
+      created_at: string;
+    }>;
 
-    const content = readFileSync(this.filePath, "utf-8").trim();
-    if (!content) return;
-
-    for (const line of content.split("\n")) {
-      if (!line.trim()) continue;
-      const entry = JSON.parse(line) as SessionEntry;
+    for (const row of rows) {
+      const parsed = JSON.parse(row.data);
+      const entry: SessionEntry = {
+        ...parsed,
+        id: row.id,
+        parentId: row.parent_id,
+        type: row.type,
+        timestamp: row.created_at,
+      };
       this.addEntry(entry);
       this.leafId = entry.id;
     }
   }
 
   private persistEntry(entry: SessionEntry): void {
-    if (!existsSync(this.filePath)) {
-      mkdirSync(path.dirname(this.filePath), { recursive: true });
-    }
-    appendFileSync(this.filePath, `${JSON.stringify(entry)}\n`, "utf-8");
+    const { id, parentId, type, timestamp, ...rest } = entry;
+    this.db
+      .prepare(
+        "INSERT INTO session_entries (id, group_id, parent_id, type, data, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+      )
+      .run(id, this.groupId, parentId, type, JSON.stringify(rest), timestamp);
   }
 }

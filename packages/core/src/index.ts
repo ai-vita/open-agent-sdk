@@ -40,6 +40,7 @@ export {
 export type { DirEntry, ExecOptions, ExecResult, Sandbox } from "./sandbox.js";
 // Session persistence
 export { SessionManager } from "./session/session-manager.js";
+export type { SessionStore } from "./session/session-store.js";
 export type {
   BranchSummaryEntry,
   CompactionEntry,
