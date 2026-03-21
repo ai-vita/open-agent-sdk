@@ -59,9 +59,10 @@ Options:
   }
 
   // Fall back to terminal if no channels connected or forced
-  if (activeChannels.length === 0 || forceTerminal) {
-    const terminal = createTerminalChannel({ onMessage });
-    await terminal.connect();
+  const useTerminal = activeChannels.length === 0 || forceTerminal;
+  let terminal: Channel | null = null;
+  if (useTerminal) {
+    terminal = createTerminalChannel({ onMessage });
     activeChannels.push(terminal);
     console.log("Connected: Terminal (dev mode)");
   }
@@ -70,6 +71,11 @@ Options:
   const model = gateway(config.model);
   const loop = startLoop({ db, channels: activeChannels, config, model });
   console.log(`${config.name} is running (model: ${config.model}, poll: ${config.pollInterval}ms)`);
+
+  // Connect terminal after all startup logs so the prompt appears last
+  if (terminal) {
+    await terminal.connect();
+  }
 
   // 7. Graceful shutdown
   const shutdown = async () => {

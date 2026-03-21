@@ -19,7 +19,10 @@ export const createTerminalChannel: ChannelFactory = ({ onMessage }): Channel =>
 
       rl.on("line", (line) => {
         const trimmed = line.trim();
-        if (!trimmed) return;
+        if (!trimmed) {
+          rl?.prompt();
+          return;
+        }
 
         const msg: InboundMessage = {
           id: `terminal-${Date.now()}`,
