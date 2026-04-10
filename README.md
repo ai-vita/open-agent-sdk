@@ -195,14 +195,26 @@ const { tools, planModeState, todoState } = createAgentTools(sandbox, {
 
 ### `@open-agent-sdk/tools-web`
 
-Web tools backed by `parallel-web`. Install this package when you need WebSearch or WebFetch.
+Web tools for agent workflows. `WebSearch` supports:
+- `parallel` provider (default)
+- `you` provider via You.com Search API
 
 ```typescript
 import { createWebSearchTool, createWebFetchTool } from "@open-agent-sdk/tools-web";
 
-const webSearch = createWebSearchTool();
-const webFetch = createWebFetchTool();
+const webSearch = createWebSearchTool({
+  provider: "you", // or "parallel"
+  apiKey: process.env.YOU_API_KEY!,
+});
+
+const webFetch = createWebFetchTool({
+  apiKey: process.env.PARALLEL_API_KEY!,
+});
 ```
+
+Environment variables:
+- `YOU_API_KEY` for `provider: "you"`
+- `PARALLEL_API_KEY` for `provider: "parallel"` and WebFetch
 
 ### `@open-agent-sdk/cli`
 
