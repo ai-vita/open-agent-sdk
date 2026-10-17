@@ -12,6 +12,7 @@
  *   oa --help           # show help
  */
 
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
@@ -27,6 +28,7 @@ import dotenv from "dotenv";
 
 import { renderSessionHistory } from "./history.js";
 import { formatSessionList, listSessions, resolveSessionPath } from "./sessions.js";
+import { createCliWebTools, type WebProvider } from "./web-tools.js";
 
 function loadEnv() {
   dotenv.config({ path: path.join(homedir(), ".agents", ".env") });
@@ -49,16 +51,19 @@ Usage:
 Options:
   -c, --continue       Resume the most recent session for this project
   -r, --resume [id]    Resume a specific session (or pick interactively)
+  --web <provider>     Web tools: mcp, parallel, off (default: automatic)
   --model <id>         Model to use (default: anthropic/claude-sonnet-4.6)
   -h, --help           Show this help message
   -v, --version        Show version
 
 Environment:
   AI_GATEWAY_API_KEY   API key for the AI gateway
+  PARALLEL_API_KEY     Use the Parallel API instead of anonymous MCP web tools
 
 Configuration is loaded from ~/.agents/.env (shell env vars take precedence).
 The agent runs in the current working directory with access to
-filesystem and shell tools. Sessions are stored in ~/.agents/sessions/.
+filesystem, shell, and web tools. Use --web off to disable web tools.
+Sessions are stored in ~/.agents/sessions/.
 `;
 
 export function parseCliArgs(args: string[]) {
@@ -84,12 +89,16 @@ export function parseCliArgs(args: string[]) {
       version: { type: "boolean", short: "v", default: false },
       continue: { type: "boolean", short: "c", default: false },
       resume: { type: "string", short: "r" },
+      web: { type: "string" },
       model: { type: "string", default: "anthropic/claude-sonnet-4.6" },
     },
     strict: true,
     allowPositionals: false,
   });
-  return { ...values, bareResume };
+  if (values.web && !["mcp", "parallel", "off"].includes(values.web)) {
+    throw new Error("--web must be mcp, parallel, or off");
+  }
+  return { ...values, web: values.web as WebProvider | undefined, bareResume };
 }
 
 async function main() {
@@ -140,6 +149,18 @@ async function main() {
   const { tools } = createAgentTools(sandbox, {
     tools: { Bash: { timeout: 30_000 } },
   });
+
+  Object.assign(
+    tools,
+    createCliWebTools({
+      provider: flags.web,
+      apiKey: process.env.PARALLEL_API_KEY,
+      mcp: {
+        sessionId: createHash("sha256").update(finalSessionPath).digest("hex"),
+        modelName: flags.model,
+      },
+    }),
+  );
 
   const skills = await discoverSkills({ cwd });
   if (skills.length > 0) {

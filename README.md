@@ -195,13 +195,18 @@ const { tools, planModeState, todoState } = createAgentTools(sandbox, {
 
 ### `@open-agent-sdk/tools-web`
 
-Web tools backed by `parallel-web`. Install this package when you need WebSearch or WebFetch.
+Web tools for searching and reading pages. Use [Parallel Search MCP](https://docs.parallel.ai/integrations/mcp/search-mcp)
+without an account or API key. Anonymous search uses Fast mode and has service rate limits.
+The tools connect over Streamable HTTP only when called, share a conversation identifier,
+and return MCP content (including source URLs and service errors) to the model.
+Calls have a 30-second total deadline and honor the caller's abort signal.
 
 ```typescript
-import { createWebSearchTool, createWebFetchTool } from "@open-agent-sdk/tools-web";
+import { createParallelMcpTools } from "@open-agent-sdk/tools-web";
 
-const webSearch = createWebSearchTool();
-const webFetch = createWebFetchTool();
+const webTools = createParallelMcpTools({ timeout: 30_000 });
+// Pass webTools to Agent, runAgent, or the AI SDK's tools option.
+// new Agent({ model, tools: webTools });
 ```
 
 ### `@open-agent-sdk/cli`
@@ -216,6 +221,19 @@ oa --help       # show all options
 ```
 
 Features: session persistence (`.session.jsonl`), auto-compaction, skill discovery, configurable model via `--model`.
+
+`oa` includes `WebSearch` and `WebFetch` by default through anonymous Parallel Search MCP.
+No search account or key is needed; your model still uses `AI_GATEWAY_API_KEY`.
+Queries and fetched URLs are sent to Parallel when the agent calls a web tool.
+Use `oa --web off` to remove both web tools from the agent.
+
+If `PARALLEL_API_KEY` is configured in your shell or `~/.agents/.env`, `oa` uses the
+existing Parallel API tools instead, including their domain filters and agentic search mode.
+Shell variables take precedence over the file. `oa --web mcp` explicitly selects anonymous
+MCP even when a key is configured; `oa --web parallel` requires the key. A provider error
+is returned to the model without switching providers. MCP search does not expose the
+API tools' domain filters. Library users can continue to select `createWebSearchTool({ apiKey })`
+and `createWebFetchTool({ apiKey })` explicitly; existing factory behavior is unchanged.
 
 ### `@open-agent-sdk/skills`
 

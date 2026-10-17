@@ -54,6 +54,14 @@ describe("parseCliArgs", () => {
     expect(parseCliArgs(["--model", "openai/gpt-4o"]).model).toBe("openai/gpt-4o");
   });
 
+  it("parses and validates web provider selection", () => {
+    expect(parseCliArgs([]).web).toBeUndefined();
+    expect(parseCliArgs(["--web", "off"]).web).toBe("off");
+    expect(parseCliArgs(["--web", "mcp"]).web).toBe("mcp");
+    expect(parseCliArgs(["--web", "parallel"]).web).toBe("parallel");
+    expect(() => parseCliArgs(["--web", "invalid"])).toThrow("--web must be");
+  });
+
   it("rejects unknown flags", () => {
     expect(() => parseCliArgs(["--unknown"])).toThrow();
   });

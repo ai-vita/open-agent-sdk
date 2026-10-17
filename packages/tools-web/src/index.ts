@@ -1,3 +1,5 @@
+export type { ParallelMcpConfig } from "./parallel-mcp.js";
+export { createParallelMcpTools } from "./parallel-mcp.js";
 export type { WebFetchConfig, WebFetchError, WebFetchOutput } from "./web-fetch.js";
 export { createWebFetchTool, webFetch } from "./web-fetch.js";
 export type {
