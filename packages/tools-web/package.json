@@ -23,7 +23,8 @@
   },
   "dependencies": {
     "@open-agent-sdk/core": "workspace:*",
-    "parallel-web": "*"
+    "parallel-web": "*",
+    "@modelcontextprotocol/sdk": "^1.32.1"
   },
   "peerDependencies": {
     "ai": ">=6.0.0",

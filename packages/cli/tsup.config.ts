@@ -13,6 +13,7 @@ export default defineConfig({
     "@open-agent-sdk/core",
     "@open-agent-sdk/sandbox-local",
     "@open-agent-sdk/tools",
+    "@open-agent-sdk/tools-web",
     "@open-agent-sdk/skills",
   ],
 });
